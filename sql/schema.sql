@@ -1,9 +1,65 @@
 -- sql/schema.sql
 
+-- First drop tables in reverse order of dependencies
+DROP TABLE IF EXISTS Promotions;
+DROP TABLE IF EXISTS Reviews;
+DROP TABLE IF EXISTS Availability;
+DROP TABLE IF EXISTS Payments;
+DROP TABLE IF EXISTS Appointments;
+DROP TABLE IF EXISTS Services;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Roles;
+
+-- Create database
 CREATE DATABASE IF NOT EXISTS booking_system;
 USE booking_system;
 
--- Users Table
+-- Create Roles table first (since Users depends on it)
+CREATE TABLE IF NOT EXISTS Roles (
+    role_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+-- Insert roles
+INSERT INTO Roles (role_name) VALUES 
+('customer'), 
+('therapist'), 
+('admin');
+
+-- Create Services table with all required columns
+CREATE TABLE IF NOT EXISTS Services (
+    service_id INT AUTO_INCREMENT PRIMARY KEY,
+    service_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    duration INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    service_type ENUM('massage', 'facial', 'body') NOT NULL,
+    image VARCHAR(255) DEFAULT 'placeholder.jpg',
+    popularity INT DEFAULT 0,
+    is_popular BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Now insert the sample services data
+INSERT INTO Services (service_name, description, duration, price, service_type, image, popularity, is_popular) VALUES
+-- Massage Services
+('Swedish Massage', 'A gentle form of massage that uses long strokes, kneading, deep circular movements, vibration and tapping.', 60, 1500.00, 'massage', 'swedish-massage.jpg', 95, TRUE),
+('Deep Tissue Massage', 'Targets knots and adhesions in the deeper layers of muscle tissue.', 90, 2000.00, 'massage', 'deep-tissue.jpg', 85, TRUE),
+('Hot Stone Massage', 'Uses heated stones to enhance relaxation and promote better circulation.', 90, 2500.00, 'massage', 'hot-stone.jpg', 75, FALSE),
+
+-- Facial Treatments
+('Classic Facial', 'Deep cleansing facial treatment suitable for all skin types.', 60, 1200.00, 'facial', 'classic-facial.jpg', 80, TRUE),
+('Anti-Aging Facial', 'Advanced treatment targeting fine lines and wrinkles.', 75, 2800.00, 'facial', 'anti-aging.jpg', 70, FALSE),
+('Hydrating Facial', 'Intensive moisture treatment for dry and dehydrated skin.', 60, 1800.00, 'facial', 'hydrating-facial.jpg', 65, FALSE),
+
+-- Body Treatments
+('Body Scrub', 'Full body exfoliation treatment that removes dead skin cells.', 45, 1300.00, 'body', 'body-scrub.jpg', 60, FALSE),
+('Aromatherapy Wrap', 'Relaxing body wrap using essential oils for deep relaxation.', 60, 1700.00, 'body', 'aromatherapy-wrap.jpg', 55, FALSE),
+('Detox Treatment', 'Full body treatment designed to help eliminate toxins.', 90, 2200.00, 'body', 'detox.jpg', 50, TRUE);
+
+-- Create Users table
 CREATE TABLE IF NOT EXISTS Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
@@ -13,22 +69,11 @@ CREATE TABLE IF NOT EXISTS Users (
     role_id INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    is_deleted BOOLEAN DEFAULT FALSE
+    is_deleted BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Services Table
-CREATE TABLE IF NOT EXISTS Services (
-    service_id INT AUTO_INCREMENT PRIMARY KEY,
-    service_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    duration INT NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN DEFAULT FALSE
-) ENGINE=InnoDB;
-
+-- Create remaining tables...
 -- Appointments Table
 CREATE TABLE IF NOT EXISTS Appointments (
     appointment_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -94,15 +139,6 @@ CREATE TABLE IF NOT EXISTS Promotions (
     end_date DATE NOT NULL,
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
-
--- Creating Roles Table
-CREATE TABLE IF NOT EXISTS Roles (
-    role_id INT AUTO_INCREMENT PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL UNIQUE
-) ENGINE=InnoDB;
-
--- Populating Roles Table
-INSERT INTO Roles (role_name) VALUES ('customer'), ('therapist'), ('admin');
 
 -- Adding indexes for performance optimization
 CREATE INDEX idx_users_email ON Users(email);

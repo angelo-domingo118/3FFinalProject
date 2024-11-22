@@ -20,5 +20,39 @@ class Service {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getFilteredServices($filters, $sort) {
+        $sql = "SELECT * FROM Services WHERE is_deleted = 0";
+        $params = [];
+
+        // Apply filters
+        if (!empty($filters['types'])) {
+            $placeholders = str_repeat('?,', count($filters['types']) - 1) . '?';
+            $sql .= " AND service_type IN ($placeholders)";
+            $params = array_merge($params, $filters['types']);
+        }
+
+        if (!empty($filters['price_max'])) {
+            $sql .= " AND price <= ?";
+            $params[] = $filters['price_max'];
+        }
+
+        if (!empty($filters['duration'])) {
+            $sql .= " AND duration = ?";
+            $params[] = $filters['duration'];
+        }
+
+        // Apply sorting
+        $sql .= match ($sort) {
+            'price_asc' => " ORDER BY price ASC",
+            'price_desc' => " ORDER BY price DESC",
+            'duration' => " ORDER BY duration ASC",
+            default => " ORDER BY popularity DESC" // Default sort by popularity
+        };
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Add more methods as needed
 } 

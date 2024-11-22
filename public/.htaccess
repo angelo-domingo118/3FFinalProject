@@ -1,9 +1,11 @@
 RewriteEngine On
+RewriteBase /cit17-final-project/public
 
-# Allow direct access to assets
-RewriteCond %{REQUEST_URI} !^/cit17-final-project/public/assets/
+# If the requested file or directory exists, serve it directly
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+
+# Otherwise, redirect all requests to index.php
 RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
 
 # Set proper MIME types

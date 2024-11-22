@@ -14,8 +14,8 @@
                     <h1 class="display-2 fw-bold mb-4" data-aos="fade-up">Welcome to SereneBook™</h1>
                     <p class="lead mb-5 fw-light" data-aos="fade-up" data-aos-delay="100">Your Journey to Wellness Begins Here - Experience Tranquility</p>
                     <div class="hero-buttons" data-aos="fade-up" data-aos-delay="200">
-                        <a href="/booking" class="btn btn-primary btn-lg px-5 me-3 rounded-pill">Book Now</a>
-                        <a href="/services" class="btn btn-outline-light btn-lg px-5 rounded-pill">Explore Services</a>
+                        <a href="<?php echo BASE_URL; ?>/public/booking" class="btn btn-primary btn-lg px-5 me-3 rounded-pill">Book Now</a>
+                        <a href="<?php echo BASE_URL; ?>/public/services" class="btn btn-outline-light btn-lg px-5 rounded-pill">Explore Services</a>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                                 <span class="currency">₱</span>
                                 <span class="amount">1,500</span>
                             </div>
-                            <a href="/booking?service=1" class="btn btn-primary rounded-pill">Book Now</a>
+                            <a href="<?php echo BASE_URL; ?>/public/booking?service=1" class="btn btn-primary rounded-pill">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@
                                 <span class="currency">₱</span>
                                 <span class="amount">2,000</span>
                             </div>
-                            <a href="/booking?service=2" class="btn btn-primary rounded-pill">Book Now</a>
+                            <a href="<?php echo BASE_URL; ?>/public/booking?service=2" class="btn btn-primary rounded-pill">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
                                 <span class="currency">₱</span>
                                 <span class="amount">2,500</span>
                             </div>
-                            <a href="/booking?service=3" class="btn btn-primary rounded-pill">Book Now</a>
+                            <a href="<?php echo BASE_URL; ?>/public/booking?service=3" class="btn btn-primary rounded-pill">Book Now</a>
                         </div>
                     </div>
                 </div>
@@ -194,7 +194,7 @@
 
         <!-- View All Services Button -->
         <div class="text-center mt-5" data-aos="fade-up">
-            <a href="/services" class="btn btn-outline-primary btn-lg rounded-pill px-5">
+            <a href="<?php echo BASE_URL; ?>/public/services" class="btn btn-outline-primary btn-lg rounded-pill px-5">
                 View All Services <i class="bi bi-arrow-right ms-2"></i>
             </a>
         </div>
@@ -388,8 +388,8 @@
         <h2 class="display-5 fw-bold mb-4">Start Your Wellness Journey Today</h2>
         <p class="lead mb-5">Join our community of wellness enthusiasts and transform your life</p>
         <div class="cta-buttons">
-            <a href="/register" class="btn btn-light btn-lg px-5 me-3 rounded-pill">Create Account</a>
-            <a href="/booking" class="btn btn-outline-light btn-lg px-5 rounded-pill">Book Session</a>
+            <a href="<?php echo BASE_URL; ?>/public/register" class="btn btn-light btn-lg px-5 me-3 rounded-pill">Create Account</a>
+            <a href="<?php echo BASE_URL; ?>/public/booking" class="btn btn-outline-light btn-lg px-5 rounded-pill">Book Session</a>
         </div>
     </div>
 </section>
