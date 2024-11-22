@@ -1,0 +1,15 @@
+/* assets/css/styles.css */
+
+/* Add any custom styles here */
+body {
+    padding-top: 70px;
+}
+
+.jumbotron {
+    background-color: #f8f9fa;
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+} 
