@@ -26,7 +26,7 @@
     <!-- Navbar with updated styling -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="<?php echo BASE_URL; ?>/public">
                 <i class="bi bi-heart-pulse-fill text-primary me-2 brand-icon"></i>
                 SereneBook™
             </a>
@@ -36,7 +36,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="/">Home</a>
+                        <a class="nav-link px-3" href="<?php echo BASE_URL; ?>/public">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3" href="/services">Services</a>
