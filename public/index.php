@@ -3,6 +3,9 @@
 
 require_once '../config/config.php';
 
+// Include models
+require_once '../app/models/Service.php';
+
 // Parse the URL
 $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
 $url = filter_var($url, FILTER_SANITIZE_URL);

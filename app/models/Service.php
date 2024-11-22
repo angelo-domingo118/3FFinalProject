@@ -14,5 +14,11 @@ class Service {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getFeaturedServices() {
+        $stmt = $this->pdo->prepare("SELECT * FROM Services WHERE is_deleted = 0 LIMIT 6");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // Add more methods as needed
 } 

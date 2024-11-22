@@ -12,4 +12,177 @@ body {
 .card-img-top {
     height: 200px;
     object-fit: cover;
+}
+
+/* Hero Section Styles */
+.hero-section {
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+                url('/assets/images/hero-bg.jpg') center/cover;
+    padding: 120px 0;
+}
+
+.hero-section h1 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+/* Card Styles */
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Features Section */
+.features-section i {
+    color: #3498db;
+}
+
+/* Testimonials */
+.testimonial-item {
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Add subtle texture to features section */
+.features-section {
+    background-color: #f8f9fa;
+    background-image: radial-gradient(#e9ecef 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Enhance feature cards */
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.feature-icon {
+    color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+}
+
+/* Improve testimonial carousel navigation */
+.testimonial-controls {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.carousel-control {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.carousel-control:hover {
+    background: var(--primary-dark);
+}
+
+.carousel-indicators {
+    position: relative;
+    margin: 0 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--primary-color) !important;
+    opacity: 0.5;
+    border: none;
+    margin: 0 !important;
+}
+
+.carousel-indicators button.active {
+    opacity: 1;
+}
+
+/* Center testimonial controls vertically */
+.testimonial-carousel {
+    position: relative;
+}
+
+.testimonial-controls {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+/* Enhance testimonial card visibility */
+.testimonial-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin: 1rem 0;
+}
+
+/* Testimonial Carousel Indicators */
+.testimonial-indicators {
+    position: relative;
+    margin-top: 2rem;
+    margin-bottom: 0;
+}
+
+.testimonial-indicators [data-bs-target] {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    border: none;
+    opacity: 0.5;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+}
+
+.testimonial-indicators .active {
+    opacity: 1;
+    width: 14px;
+    height: 14px;
+}
+
+.testimonial-indicators [data-bs-target]:not(.active) {
+    background-color: #6c757d !important;
 } 

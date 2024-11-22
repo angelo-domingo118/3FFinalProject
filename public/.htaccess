@@ -1,4 +1,20 @@
 RewriteEngine On
+
+# Allow direct access to assets
+RewriteCond %{REQUEST_URI} !^/cit17-final-project/public/assets/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php?url=$1 [QSA,L] 
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Set proper MIME types
+AddType text/css .css
+AddType text/javascript .js
+AddType image/jpeg .jpg .jpeg
+AddType image/png .png
+AddType image/gif .gif
+
+# Allow access to assets
+<FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch> 

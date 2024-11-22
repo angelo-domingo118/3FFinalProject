@@ -1,6 +1,7 @@
 <?php
 // config/config.php
 
+define('BASE_URL', 'http://localhost/cit17-final-project');
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
