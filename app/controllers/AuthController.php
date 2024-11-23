@@ -43,7 +43,7 @@ class AuthController {
                         header('Location: ' . BASE_URL . '/public/therapist/dashboard');
                         break;
                     case 3: // Admin
-                        header('Location: ' . BASE_URL . '/public/admin/dashboard');
+                        header('Location: ' . BASE_URL . '/public/admin');
                         break;
                 }
                 exit;

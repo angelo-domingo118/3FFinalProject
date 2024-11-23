@@ -13,20 +13,11 @@ class BookingController {
         $this->userModel = new User($pdo);
     }
 
-    public function index($serviceId = null) {
-        // Get all services
+    public function index() {
+        $serviceId = isset($_GET['service']) ? $_GET['service'] : null;
         $services = $this->serviceModel->getAllServices();
+        $selectedService = $serviceId ? $this->serviceModel->getServiceById($serviceId) : null;
         
-        // Get selected service if serviceId is provided
-        $selectedService = null;
-        if ($serviceId) {
-            $selectedService = $this->serviceModel->getServiceById($serviceId);
-        }
-
-        // Get all therapists
-        $therapists = $this->userModel->getTherapists();
-
-        // Load the booking view
         require_once '../app/views/booking/index.php';
     }
 

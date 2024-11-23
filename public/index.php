@@ -74,6 +74,22 @@ switch ($url[0]) {
         $controller = new AuthController($pdo);
         $controller->register();
         break;
+    case 'admin':
+        require_once '../app/controllers/AdminController.php';
+        $controller = new AdminController($pdo);
+        
+        if (!isset($url[1])) {
+            $controller->dashboard();
+        } else {
+            $method = $url[1];
+            if (method_exists($controller, $method)) {
+                $controller->$method();
+            } else {
+                header("HTTP/1.0 404 Not Found");
+                include '../app/views/errors/404.php';
+            }
+        }
+        break;
     default:
         echo "404 Not Found";
         break;

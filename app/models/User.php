@@ -115,4 +115,28 @@ class User {
         
         return false;
     }
+
+    public function getTherapistCount() {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM Users WHERE role_id = 2 AND is_active = TRUE";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        } catch (PDOException $e) {
+            error_log("Error getting therapist count: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getCustomerCount() {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM Users WHERE role_id = 1 AND is_active = TRUE";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        } catch (PDOException $e) {
+            error_log("Error getting customer count: " . $e->getMessage());
+            return 0;
+        }
+    }
 } 

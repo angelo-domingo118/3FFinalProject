@@ -9,8 +9,9 @@ class AuthMiddleware {
 
     public static function requireAdmin() {
         self::requireAuth();
-        if ($_SESSION['role_id'] !== 3) { // 3 is admin role
-            header('Location: /dashboard');
+        if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] !== 3) {
+            $_SESSION['error'] = "Access denied. Admin privileges required.";
+            header('Location: ' . BASE_URL . '/login');
             exit;
         }
     }

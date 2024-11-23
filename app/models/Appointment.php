@@ -80,4 +80,56 @@ class Appointment {
             'completed_count' => (int)$result['completed_count'] ?? 0
         ];
     }
+
+    public function getBookingCounts() {
+        try {
+            $sql = "SELECT 
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+                    COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
+                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+                    COUNT(CASE WHEN status = 'canceled' THEN 1 END) as canceled
+                    FROM appointments";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return null;
+        }
+    }
+
+    public function getAllBookings($filters = []) {
+        try {
+            $sql = "SELECT a.*, s.service_name, 
+                           u1.full_name as customer_name,
+                           u2.full_name as therapist_name
+                    FROM Appointments a
+                    JOIN Services s ON a.service_id = s.service_id
+                    JOIN Users u1 ON a.user_id = u1.user_id
+                    LEFT JOIN Users u2 ON a.therapist_id = u2.user_id
+                    WHERE 1=1";
+            
+            $params = [];
+            
+            // Add filters
+            if (!empty($filters['status'])) {
+                $sql .= " AND a.status = ?";
+                $params[] = $filters['status'];
+            }
+            
+            if (!empty($filters['limit'])) {
+                $sql .= " ORDER BY a.appointment_date DESC LIMIT ?";
+                $params[] = (int)$filters['limit'];
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Error getting all bookings: " . $e->getMessage());
+            return [];
+        }
+    }
 } 

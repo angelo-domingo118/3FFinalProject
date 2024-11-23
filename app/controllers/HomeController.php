@@ -24,6 +24,9 @@ class HomeController {
             'all_services' => $allServices
         ];
         
+        // Extract data to make variables available in view
+        extract($data);
+        
         require_once '../app/views/home.php';
     }
 } 

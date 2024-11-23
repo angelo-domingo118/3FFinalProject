@@ -12,9 +12,11 @@ class ServiceController {
 
     public function index() {
         $filters = [
-            'types' => $_GET['type'] ?? [],
-            'price_max' => $_GET['price_max'] ?? null,
-            'duration' => $_GET['duration'] ?? null
+            'types' => isset($_GET['type']) && is_array($_GET['type']) ? $_GET['type'] : [],
+            'price_min' => isset($_GET['price_min']) ? (float)$_GET['price_min'] : null,
+            'price_max' => isset($_GET['price_max']) ? (float)$_GET['price_max'] : null,
+            'duration' => isset($_GET['duration']) && is_array($_GET['duration']) ? $_GET['duration'] : [],
+            'search' => isset($_GET['search']) ? trim($_GET['search']) : null
         ];
         
         $sort = $_GET['sort'] ?? 'popular';
