@@ -1,0 +1,88 @@
+.service-filters {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 1rem;
+}
+
+.service-card img {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.availability-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.service-card.hidden {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .service-filters .btn-group {
+        width: 100%;
+    }
+    
+    .service-filters button {
+        flex: 1;
+    }
+}
+
+.booking-progress {
+    position: relative;
+    margin: 2rem 0;
+}
+
+.step {
+    position: relative;
+    z-index: 1;
+    background: white;
+    padding: 0 10px;
+    color: #6c757d;
+}
+
+.step.active {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.service-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.service-card.border-primary {
+    box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.time-slot {
+    text-align: center;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.time-slot.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+#datepicker {
+    width: 100%;
+}
+
+.datepicker-cell.disabled {
+    color: #dee2e6;
+}
+
+.datepicker-cell.selected {
+    background-color: #0d6efd !important;
+    color: white !important;
+} 

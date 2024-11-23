@@ -2,17 +2,28 @@
 // app/controllers/HomeController.php
 
 class HomeController {
-    private $pdo;
-    private $serviceModel;
+    private $db;
+    private $service;
 
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
-        $this->serviceModel = new Service($pdo);
+    public function __construct($db) {
+        $this->db = $db;
+        require_once '../app/models/Service.php';
+        $this->service = new Service($db);
     }
 
     public function index() {
-        // Fetch featured services
-        $services = $this->serviceModel->getFeaturedServices();
+        // Get featured services
+        $featuredServices = $this->service->getFeaturedServices();
+        
+        // Get all services for the services section
+        $allServices = $this->service->getAllServices();
+
+        // Load the home view with the services data
+        $data = [
+            'featured_services' => $featuredServices,
+            'all_services' => $allServices
+        ];
+        
         require_once '../app/views/home.php';
     }
 } 

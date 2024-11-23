@@ -2,21 +2,37 @@
 // app/models/Service.php
 
 class Service {
-    private $pdo;
+    private $db;
 
     public function __construct($pdo) {
-        $this->pdo = $pdo;
+        $this->db = $pdo;
     }
 
     public function getAllServices() {
-        $stmt = $this->pdo->prepare("SELECT * FROM Services");
+        $sql = "SELECT * FROM Services WHERE is_deleted = FALSE ORDER BY popularity DESC";
+        $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getFeaturedServices() {
-        $stmt = $this->pdo->prepare("SELECT * FROM Services WHERE is_deleted = 0 LIMIT 6");
-        $stmt->execute();
+    public function getServiceById($serviceId) {
+        $sql = "SELECT * FROM Services WHERE service_id = ? AND is_deleted = FALSE";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$serviceId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getPopularServices($limit = 6) {
+        $sql = "SELECT * FROM Services WHERE is_deleted = FALSE AND is_popular = TRUE ORDER BY popularity DESC LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getServicesByType($type) {
+        $sql = "SELECT * FROM Services WHERE service_type = ? AND is_deleted = FALSE ORDER BY popularity DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$type]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -49,9 +65,26 @@ class Service {
             default => " ORDER BY popularity DESC" // Default sort by popularity
         };
 
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFeaturedServices() {
+        $query = "SELECT * FROM Services 
+                  WHERE is_popular = TRUE 
+                  AND is_deleted = FALSE 
+                  ORDER BY popularity DESC 
+                  LIMIT 3";
+                  
+        try {
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return [];
+        }
     }
 
     // Add more methods as needed

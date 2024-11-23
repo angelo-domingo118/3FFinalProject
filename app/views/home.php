@@ -98,98 +98,40 @@
 
         <!-- Service Cards -->
         <div class="row g-4">
-            <!-- Swedish Massage -->
-            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                <div class="service-card">
-                    <div class="service-image-wrapper">
-                        <div class="service-image service-bg-1">
-                            <div class="service-overlay"></div>
-                        </div>
-                        <span class="service-badge">Most Popular</span>
-                        <div class="service-info">
-                            <span class="service-duration">
-                                <i class="bi bi-clock"></i> 60 mins
-                            </span>
-                            <span class="service-level">
-                                <i class="bi bi-activity"></i> Gentle
-                            </span>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3 class="service-title">Swedish Massage</h3>
-                        <p class="service-description">Experience deep relaxation with our signature Swedish massage, perfect for stress relief and muscle tension.</p>
-                        <div class="service-meta">
-                            <div class="service-price">
-                                <span class="currency">₱</span>
-                                <span class="amount">1,500</span>
+            <?php foreach ($all_services as $service): ?>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-card">
+                        <div class="service-image-wrapper">
+                            <div class="service-image" style="background-image: url('<?php echo BASE_URL; ?>/public/assets/images/services/<?php echo $service['image']; ?>')">
+                                <div class="service-overlay"></div>
                             </div>
-                            <a href="<?php echo BASE_URL; ?>/public/booking?service=1" class="btn btn-primary rounded-pill">Book Now</a>
+                            <?php if ($service['is_popular']): ?>
+                                <span class="service-badge">Most Popular</span>
+                            <?php endif; ?>
+                            <div class="service-info">
+                                <span class="service-duration">
+                                    <i class="bi bi-clock"></i> <?php echo $service['duration']; ?> mins
+                                </span>
+                                <span class="service-level">
+                                    <i class="bi bi-activity"></i> <?php echo ucfirst($service['service_type']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="service-content">
+                            <h3 class="service-title"><?php echo htmlspecialchars($service['service_name']); ?></h3>
+                            <p class="service-description"><?php echo htmlspecialchars($service['description']); ?></p>
+                            <div class="service-meta">
+                                <div class="service-price">
+                                    <span class="currency">₱</span>
+                                    <span class="amount"><?php echo number_format($service['price'], 2); ?></span>
+                                </div>
+                                <a href="<?php echo BASE_URL; ?>/public/booking?service=<?php echo $service['service_id']; ?>" 
+                                   class="btn btn-primary rounded-pill">Book Now</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Aromatherapy Massage -->
-            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                <div class="service-card">
-                    <div class="service-image-wrapper">
-                        <div class="service-image service-bg-2">
-                            <div class="service-overlay"></div>
-                        </div>
-                        <span class="service-badge bg-info">Featured</span>
-                        <div class="service-info">
-                            <span class="service-duration">
-                                <i class="bi bi-clock"></i> 90 mins
-                            </span>
-                            <span class="service-level">
-                                <i class="bi bi-activity"></i> Moderate
-                            </span>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3 class="service-title">Aromatherapy Massage</h3>
-                        <p class="service-description">A therapeutic blend of essential oils and massage techniques to enhance physical and emotional well-being.</p>
-                        <div class="service-meta">
-                            <div class="service-price">
-                                <span class="currency">₱</span>
-                                <span class="amount">2,000</span>
-                            </div>
-                            <a href="<?php echo BASE_URL; ?>/public/booking?service=2" class="btn btn-primary rounded-pill">Book Now</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hot Stone Therapy -->
-            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                <div class="service-card">
-                    <div class="service-image-wrapper">
-                        <div class="service-image service-bg-3">
-                            <div class="service-overlay"></div>
-                        </div>
-                        <span class="service-badge bg-warning">Premium</span>
-                        <div class="service-info">
-                            <span class="service-duration">
-                                <i class="bi bi-clock"></i> 120 mins
-                            </span>
-                            <span class="service-level">
-                                <i class="bi bi-activity"></i> Intensive
-                            </span>
-                        </div>
-                    </div>
-                    <div class="service-content">
-                        <h3 class="service-title">Hot Stone Therapy</h3>
-                        <p class="service-description">Melt away tension with heated volcanic stones combined with therapeutic massage techniques.</p>
-                        <div class="service-meta">
-                            <div class="service-price">
-                                <span class="currency">₱</span>
-                                <span class="amount">2,500</span>
-                            </div>
-                            <a href="<?php echo BASE_URL; ?>/public/booking?service=3" class="btn btn-primary rounded-pill">Book Now</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
 
         <!-- View All Services Button -->

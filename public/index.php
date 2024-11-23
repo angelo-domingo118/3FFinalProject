@@ -1,11 +1,15 @@
 <?php
 // public/index.php
 
+session_start();
+
 require_once '../config/config.php';
 
-// Include models
-require_once '../app/models/Service.php';
-require_once '../app/models/User.php';
+// Include models - use absolute paths
+require_once __DIR__ . '/../app/models/Service.php';
+require_once __DIR__ . '/../app/models/User.php';
+require_once __DIR__ . '/../app/models/Appointment.php';
+require_once __DIR__ . '/../app/models/Review.php';
 
 // Parse the URL
 $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
@@ -25,14 +29,31 @@ switch ($url[0]) {
         $controller->index();
         break;
     case 'booking':
-        require_once '../app/controllers/AppointmentController.php';
-        $controller = new AppointmentController($pdo);
-        $controller->book();
+        require_once '../app/controllers/BookingController.php';
+        $controller = new BookingController($pdo);
+        if (isset($url[1]) && $url[1] === 'datetime') {
+            $controller->datetime();
+        } else {
+            if (isset($_GET['service'])) {
+                $controller->index($_GET['service']);
+            } else {
+                $controller->index();
+            }
+        }
         break;
     case 'dashboard':
         require_once '../app/controllers/DashboardController.php';
         $controller = new DashboardController($pdo);
-        $controller->index();
+        if (isset($url[1])) {
+            $method = $url[1];
+            if (method_exists($controller, $method)) {
+                $controller->$method();
+            } else {
+                echo "404 Not Found";
+            }
+        } else {
+            $controller->overview();
+        }
         break;
     case 'login':
         require_once '../app/controllers/AuthController.php';
