@@ -39,6 +39,9 @@ switch ($url[0]) {
                 case 'getAvailableSlots':
                     $controller->getAvailableSlots();
                     break;
+                case 'confirm':
+                    $controller->confirm();
+                    break;
                 default:
                     $controller->index();
             }

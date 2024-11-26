@@ -88,4 +88,27 @@ class BookingController {
         }
         exit; // Make sure nothing else is output
     }
+
+    public function confirm() {
+        if (!isset($_GET['service']) || !isset($_GET['date']) || !isset($_GET['time']) || !isset($_GET['therapist'])) {
+            header('Location: ' . BASE_URL . '/public/booking');
+            exit;
+        }
+
+        $serviceId = $_GET['service'];
+        $selectedDate = $_GET['date'];
+        $selectedTime = $_GET['time'];
+        $therapistId = $_GET['therapist'];
+
+        // Get service and therapist details
+        $service = $this->serviceModel->getServiceById($serviceId);
+        $therapist = $this->userModel->getUserById($therapistId);
+
+        if (!$service || !$therapist) {
+            header('Location: ' . BASE_URL . '/public/booking');
+            exit;
+        }
+
+        require_once '../app/views/booking/confirm.php';
+    }
 } 
