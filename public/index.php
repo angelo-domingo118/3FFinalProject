@@ -31,8 +31,17 @@ switch ($url[0]) {
     case 'booking':
         require_once '../app/controllers/BookingController.php';
         $controller = new BookingController($pdo);
-        if (isset($url[1]) && $url[1] === 'datetime') {
-            $controller->datetime();
+        if (isset($url[1])) {
+            switch($url[1]) {
+                case 'datetime':
+                    $controller->datetime();
+                    break;
+                case 'getAvailableSlots':
+                    $controller->getAvailableSlots();
+                    break;
+                default:
+                    $controller->index();
+            }
         } else {
             if (isset($_GET['service'])) {
                 $controller->index($_GET['service']);
