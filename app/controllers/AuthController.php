@@ -34,7 +34,18 @@ class AuthController {
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['role_id'] = $user['role_id'];
                 
-                // Redirect based on role
+                // Check if there's a booking redirect
+                if (isset($_SESSION['booking_redirect'])) {
+                    $redirect = $_SESSION['booking_redirect'];
+                    unset($_SESSION['booking_redirect']); // Clear the redirect data
+                    
+                    // Reconstruct the booking URL
+                    $params = http_build_query($redirect['params']);
+                    header('Location: ' . BASE_URL . '/public/booking/' . $redirect['page'] . '?' . $params);
+                    exit;
+                }
+                
+                // Default redirects based on role
                 switch ($user['role_id']) {
                     case 1: // Customer
                         header('Location: ' . BASE_URL . '/public/dashboard');
@@ -69,6 +80,7 @@ class AuthController {
             $password = $_POST['password'];
             $confirmPassword = $_POST['confirm_password'];
             $terms = isset($_POST['terms']);
+            $phoneNumber = $_POST['phone_number'];
             
             // Validation
             if (empty($fullName) || empty($email) || empty($password) || empty($confirmPassword)) {
@@ -103,16 +115,20 @@ class AuthController {
             }
 
             // Create user
-            $userId = $this->userModel->create([
+            $success = $this->userModel->createUser([
                 'full_name' => $fullName,
                 'email' => $email,
-                'password' => password_hash($password, PASSWORD_DEFAULT),
+                'phone_number' => $phoneNumber,
+                'password' => $password,
                 'role_id' => 1 // Default role (customer)
             ]);
 
-            if ($userId) {
+            if ($success) {
+                // Get the newly created user
+                $user = $this->userModel->findByEmail($email);
+                
                 // Auto login after registration
-                $_SESSION['user_id'] = $userId;
+                $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['full_name'] = $fullName;
                 $_SESSION['role_id'] = 1;
                 

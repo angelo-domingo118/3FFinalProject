@@ -1,5 +1,9 @@
 -- sql/schema.sql
 
+-- Create database
+CREATE DATABASE IF NOT EXISTS spa_booking_db;
+USE spa_booking_db;
+
 -- First drop tables in reverse order of dependencies
 DROP TABLE IF EXISTS Promotions;
 DROP TABLE IF EXISTS Reviews;
@@ -9,10 +13,6 @@ DROP TABLE IF EXISTS Appointments;
 DROP TABLE IF EXISTS Services;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Roles;
-
--- Create database
-CREATE DATABASE IF NOT EXISTS booking_system;
-USE booking_system;
 
 -- Create Roles table first (since Users depends on it)
 CREATE TABLE IF NOT EXISTS Roles (
@@ -48,16 +48,26 @@ INSERT INTO Services (service_name, description, duration, price, service_type, 
 ('Swedish Massage', 'A gentle form of massage that uses long strokes, kneading, deep circular movements, vibration and tapping.', 60, 1500.00, 'massage', 'swedish-massage.jpg', 95, TRUE),
 ('Deep Tissue Massage', 'Targets knots and adhesions in the deeper layers of muscle tissue.', 90, 2000.00, 'massage', 'deep-tissue.jpg', 85, TRUE),
 ('Hot Stone Massage', 'Uses heated stones to enhance relaxation and promote better circulation.', 90, 2500.00, 'massage', 'hot-stone.jpg', 75, FALSE),
+('Sports Massage', 'Designed to enhance athletic performance and recovery.', 60, 1800.00, 'massage', 'sports-massage.jpg', 70, TRUE),
+('Prenatal Massage', 'Safe and gentle massage specifically designed for expectant mothers.', 60, 1700.00, 'massage', 'prenatal-massage.jpg', 65, FALSE),
+('Reflexology', 'Focused massage on feet, hands, and ears to stimulate body systems.', 45, 1200.00, 'massage', 'reflexology.jpg', 60, TRUE),
+('Couples Massage', 'Relaxing massage experience for two people in the same room.', 90, 3000.00, 'massage', 'couples-massage.jpg', 80, TRUE),
 
 -- Facial Treatments
 ('Classic Facial', 'Deep cleansing facial treatment suitable for all skin types.', 60, 1200.00, 'facial', 'classic-facial.jpg', 80, TRUE),
 ('Anti-Aging Facial', 'Advanced treatment targeting fine lines and wrinkles.', 75, 2800.00, 'facial', 'anti-aging.jpg', 70, FALSE),
 ('Hydrating Facial', 'Intensive moisture treatment for dry and dehydrated skin.', 60, 1800.00, 'facial', 'hydrating-facial.jpg', 65, FALSE),
+('Acne Treatment Facial', 'Specialized treatment for acne-prone skin.', 75, 2000.00, 'facial', 'acne-facial.jpg', 75, TRUE),
+('Brightening Facial', 'Treatment focused on evening skin tone and adding radiance.', 60, 2200.00, 'facial', 'brightening-facial.jpg', 72, TRUE),
+('Oxygen Facial', 'Infuses oxygen, vitamins, and minerals into the skin.', 90, 3000.00, 'facial', 'oxygen-facial.jpg', 68, FALSE),
 
 -- Body Treatments
 ('Body Scrub', 'Full body exfoliation treatment that removes dead skin cells.', 45, 1300.00, 'body', 'body-scrub.jpg', 60, FALSE),
 ('Aromatherapy Wrap', 'Relaxing body wrap using essential oils for deep relaxation.', 60, 1700.00, 'body', 'aromatherapy-wrap.jpg', 55, FALSE),
-('Detox Treatment', 'Full body treatment designed to help eliminate toxins.', 90, 2200.00, 'body', 'detox.jpg', 50, TRUE);
+('Detox Treatment', 'Full body treatment designed to help eliminate toxins.', 90, 2200.00, 'body', 'detox.jpg', 50, TRUE),
+('Slimming Body Wrap', 'Body wrap designed to tone and tighten skin.', 90, 2500.00, 'body', 'slimming-wrap.jpg', 65, TRUE),
+('Salt Glow Treatment', 'Exfoliating treatment using sea salts for smooth skin.', 45, 1400.00, 'body', 'salt-glow.jpg', 58, FALSE),
+('Mud Body Wrap', 'Therapeutic wrap using mineral-rich mud.', 75, 1900.00, 'body', 'mud-wrap.jpg', 52, FALSE);
 
 -- Create Users table
 CREATE TABLE IF NOT EXISTS Users (
@@ -73,8 +83,20 @@ CREATE TABLE IF NOT EXISTS Users (
     FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Create remaining tables...
--- Appointments Table
+-- Insert sample users (1 admin, 1 customer, 5 therapists)
+INSERT INTO Users (full_name, email, phone_number, password, role_id) VALUES 
+-- Admin
+('Admin User', 'admin@spa.com', '09123456789', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3),
+-- Customer
+('John Doe', 'customer@example.com', '09187654321', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+-- Therapists
+('Maria Santos', 'maria@spa.com', '09234567890', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2),
+('Juan Cruz', 'juan@spa.com', '09345678901', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2),
+('Ana Reyes', 'ana@spa.com', '09456789012', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2),
+('Pedro Garcia', 'pedro@spa.com', '09567890123', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2),
+('Lisa Gomez', 'lisa@spa.com', '09678901234', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2);
+
+-- Create Appointments table
 CREATE TABLE IF NOT EXISTS Appointments (
     appointment_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -83,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Appointments (
     appointment_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
+    notes TEXT,
     status ENUM('pending', 'confirmed', 'completed', 'canceled') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -92,7 +115,7 @@ CREATE TABLE IF NOT EXISTS Appointments (
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
--- Payments Table
+-- Create Payments table
 CREATE TABLE IF NOT EXISTS Payments (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
     appointment_id INT NOT NULL,
@@ -105,7 +128,7 @@ CREATE TABLE IF NOT EXISTS Payments (
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
--- Availability Table
+-- Create Availability table
 CREATE TABLE IF NOT EXISTS Availability (
     availability_id INT AUTO_INCREMENT PRIMARY KEY,
     therapist_id INT NOT NULL,
@@ -116,7 +139,35 @@ CREATE TABLE IF NOT EXISTS Availability (
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
--- Reviews Table
+-- Insert sample availability data for therapists (for the next 30 days)
+INSERT INTO Availability (therapist_id, date, start_time, end_time)
+SELECT 
+    u.user_id,
+    DATE_ADD(CURRENT_DATE, INTERVAL d.day DAY) as date,
+    CASE 
+        WHEN WEEKDAY(DATE_ADD(CURRENT_DATE, INTERVAL d.day DAY)) < 5 
+        THEN '09:00:00' -- Weekday start time
+        ELSE '10:00:00' -- Weekend start time
+    END as start_time,
+    CASE 
+        WHEN WEEKDAY(DATE_ADD(CURRENT_DATE, INTERVAL d.day DAY)) < 5 
+        THEN '18:00:00' -- Weekday end time
+        ELSE '17:00:00' -- Weekend end time
+    END as end_time
+FROM 
+    Users u
+    CROSS JOIN (
+        SELECT a.a + b.a * 10 as day
+        FROM 
+            (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a,
+            (SELECT 0 as a UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) b
+        ORDER BY day
+    ) d
+WHERE 
+    u.role_id = 2 -- Only for therapists
+    AND d.day < 30; -- For the next 30 days
+
+-- Create Reviews table
 CREATE TABLE IF NOT EXISTS Reviews (
     review_id INT AUTO_INCREMENT PRIMARY KEY,
     appointment_id INT NOT NULL,
@@ -129,7 +180,7 @@ CREATE TABLE IF NOT EXISTS Reviews (
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
--- Promotions Table
+-- Create Promotions table
 CREATE TABLE IF NOT EXISTS Promotions (
     promo_id INT AUTO_INCREMENT PRIMARY KEY,
     promo_code VARCHAR(50) NOT NULL UNIQUE,

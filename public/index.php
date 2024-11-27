@@ -42,6 +42,9 @@ switch ($url[0]) {
                 case 'confirm':
                     $controller->confirm();
                     break;
+                case 'process':
+                    $controller->process();
+                    break;
                 default:
                     $controller->index();
             }

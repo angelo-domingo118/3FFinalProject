@@ -316,6 +316,31 @@
                             <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
 
+                        <!-- Phone Number -->
+                        <div class="mb-4">
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-telephone text-muted"></i>
+                                </span>
+                                <input type="tel" class="form-control" id="phoneNumber" name="phone_number" 
+                                       required placeholder="Enter 11-digit phone number (e.g., 09123456789)"
+                                       minlength="11" maxlength="11"
+                                       pattern="[0-9]{11}"
+                                       title="Phone number must be exactly 11 digits"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)">
+                            </div>
+                            <div class="invalid-feedback">Please enter a valid 11-digit phone number.</div>
+                            <?php if(isset($_SESSION['error']) && strpos($_SESSION['error'], 'phone number') !== false): ?>
+                                <div class="text-danger small mt-1">
+                                    <?php 
+                                    echo $_SESSION['error']; 
+                                    unset($_SESSION['error']); 
+                                    ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
                         <!-- Password -->
                         <div class="mb-4">
                             <label for="password" class="form-label">Password</label>

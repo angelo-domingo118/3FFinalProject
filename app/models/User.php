@@ -25,7 +25,7 @@ class User {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function getUserByEmail($email) {
+    public function findByEmail($email) {
         $sql = "SELECT * FROM Users WHERE email = ? AND is_deleted = FALSE";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$email]);

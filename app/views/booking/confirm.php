@@ -20,56 +20,56 @@
             <!-- Booking Summary -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">Booking Summary</h5>
-                    <div class="row g-4">
-                        <!-- Service Details -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <i class="bi bi-bag-check fs-4 me-3 text-primary"></i>
-                                <div>
-                                    <h6 class="mb-1">Service</h6>
-                                    <p class="mb-0 fw-medium"><?php echo htmlspecialchars($service['service_name']); ?></p>
-                                    <p class="text-muted mb-0">
-                                        <i class="bi bi-clock-history me-1"></i><?php echo $service['duration']; ?> mins
-                                        <span class="mx-2">|</span>
-                                        <i class="bi bi-tag me-1"></i>₱<?php echo number_format($service['price'], 2); ?>
-                                    </p>
-                                </div>
-                            </div>
+                    <h5 class="card-title mb-4">Booking Details</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Service:</strong>
                         </div>
-
-                        <!-- Date & Time -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <i class="bi bi-calendar-check fs-4 me-3 text-primary"></i>
-                                <div>
-                                    <h6 class="mb-1">Date & Time</h6>
-                                    <p class="mb-0 fw-medium"><?php echo date('l, F j, Y', strtotime($selectedDate)); ?></p>
-                                    <p class="text-muted mb-0">
-                                        <i class="bi bi-clock me-1"></i><?php echo date('g:i A', strtotime($selectedTime)); ?>
-                                    </p>
-                                </div>
-                            </div>
+                        <div class="col-md-8">
+                            <?php echo htmlspecialchars($service['service_name']); ?>
+                            <small class="text-muted d-block">
+                                Duration: <?php echo $service['duration']; ?> minutes
+                            </small>
                         </div>
+                    </div>
 
-                        <!-- Therapist -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <i class="bi bi-person-check fs-4 me-3 text-primary"></i>
-                                <div>
-                                    <h6 class="mb-1">Therapist</h6>
-                                    <p class="mb-0 fw-medium"><?php echo htmlspecialchars($therapist['full_name']); ?></p>
-                                    <p class="text-muted mb-0">Professional Therapist</p>
-                                </div>
-                            </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Date:</strong>
                         </div>
+                        <div class="col-md-8">
+                            <?php echo date('l, F j, Y', strtotime($selectedDate)); ?>
+                        </div>
+                    </div>
 
-                        <!-- Customer Notes -->
-                        <div class="col-12 mt-4">
-                            <div class="form-floating">
-                                <textarea class="form-control" id="notes" style="height: 100px" placeholder="Any special requests or notes?"></textarea>
-                                <label for="notes">Special Requests or Notes (Optional)</label>
-                            </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Time:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <?php 
+                                echo date('g:i A', strtotime($selectedTime)) . ' - ' . 
+                                     date('g:i A', strtotime($selectedTime) + $service['duration'] * 60);
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Therapist:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            <?php echo htmlspecialchars($therapist['full_name']); ?>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Price:</strong>
+                        </div>
+                        <div class="col-md-8">
+                            ₱<?php echo number_format($service['price'], 2); ?>
                         </div>
                     </div>
                 </div>
@@ -93,8 +93,8 @@
                    class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-2"></i>Back
                 </a>
-                <button type="button" id="confirmBooking" class="btn btn-primary" disabled>
-                    Confirm Booking<i class="bi bi-arrow-right ms-2"></i>
+                <button type="button" class="btn btn-primary" id="confirmBookingBtn">
+                    <i class="bi bi-check-circle me-2"></i>Confirm Booking
                 </button>
             </div>
         </div>
@@ -125,49 +125,84 @@
     </div>
 </div>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginRequiredModalLabel">Login Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please log in to complete your booking. Your booking details will be saved.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="<?php echo BASE_URL; ?>/public/login" class="btn btn-primary">Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const confirmBookingBtn = document.getElementById('confirmBookingBtn');
     const termsCheckbox = document.getElementById('terms');
-    const confirmButton = document.getElementById('confirmBooking');
-    
-    // Enable/disable confirm button based on terms checkbox
-    termsCheckbox.addEventListener('change', function() {
-        confirmButton.disabled = !this.checked;
-    });
-    
-    // Handle booking confirmation
-    confirmButton.addEventListener('click', function() {
-        const notes = document.getElementById('notes').value;
-        
-        // Create booking data
-        const bookingData = {
-            service_id: <?php echo $service['service_id']; ?>,
-            therapist_id: <?php echo $therapist['user_id']; ?>,
-            date: '<?php echo $selectedDate; ?>',
-            time: '<?php echo $selectedTime; ?>',
-            notes: notes
-        };
-        
-        // Send booking request
-        fetch(`${BASE_URL}/public/booking/process`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(bookingData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.href = `${BASE_URL}/public/booking/success?id=${data.booking_id}`;
-            } else {
-                alert(data.error || 'Failed to create booking. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
+    const notesTextarea = document.getElementById('notes');
+
+    confirmBookingBtn.addEventListener('click', function() {
+        if (!termsCheckbox.checked) {
+            alert('Please agree to the terms and conditions to proceed.');
+            return;
+        }
+
+        // Check if user is logged in
+        <?php if (!isset($_SESSION['user_id'])): ?>
+            // Store booking details in session
+            <?php 
+            $_SESSION['booking_details'] = [
+                'service_id' => $service['service_id'],
+                'date' => $selectedDate,
+                'time' => $selectedTime,
+                'therapist_id' => $therapist['user_id'],
+                'notes' => '<script>document.getElementById("notes").value</script>'
+            ];
+            ?>
+            
+            // Show login required modal
+            var loginModal = new bootstrap.Modal(document.getElementById('loginRequiredModal'));
+            loginModal.show();
+        <?php else: ?>
+            // Proceed with booking
+            const bookingData = {
+                service_id: <?php echo $service['service_id']; ?>,
+                date: '<?php echo $selectedDate; ?>',
+                time: '<?php echo $selectedTime; ?>',
+                therapist_id: <?php echo $therapist['user_id']; ?>,
+                notes: notesTextarea.value
+            };
+
+            // Send booking data to server
+            fetch('<?php echo BASE_URL; ?>/public/booking/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '<?php echo BASE_URL; ?>/public/booking/success';
+                } else {
+                    alert(data.message || 'Failed to create booking. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        <?php endif; ?>
     });
 });
 </script>

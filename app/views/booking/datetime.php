@@ -262,6 +262,30 @@
 <script>
 const BASE_URL = '<?php echo BASE_URL; ?>';
 
+function addMinutesToTime(timeStr, minutes) {
+    const [hours, mins] = timeStr.split(':').map(Number);
+    const date = new Date(2000, 0, 1, hours, mins);
+    date.setMinutes(date.getMinutes() + minutes);
+    return date.toTimeString().substring(0, 5);
+}
+
+function getMaxStartTime(endTimeStr, duration) {
+    const [hours, mins] = endTimeStr.split(':').map(Number);
+    const date = new Date(2000, 0, 1, hours, mins);
+    date.setMinutes(date.getMinutes() - duration);
+    return date.toTimeString().substring(0, 5);
+}
+
+function formatTime(timeStr) {
+    const [hours, minutes] = timeStr.split(':');
+    const date = new Date(2000, 0, 1, hours, minutes);
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize datepicker with enhanced options
     const datepicker = new Datepicker(document.getElementById('datepicker'), {
@@ -316,28 +340,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 const timeSlotsHtml = slots.map(slot => `
-                    <button class="btn time-slot" 
-                            data-therapist-id="${slot.therapist_id}"
-                            data-time="${slot.start_time}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="bi bi-clock me-2"></i>${formatTime(slot.start_time)}
+                    <div class="card mb-3 time-slot-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">Available Time Range</h6>
+                                    <p class="mb-0">
+                                        <i class="bi bi-clock me-2"></i>${slot.formatted_start_time} - ${slot.formatted_end_time}
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <small class="d-block text-muted">with</small>
+                                    <span class="fw-medium">${slot.therapist_name}</span>
+                                </div>
                             </div>
-                            <div class="text-end">
-                                <small class="d-block text-muted">with</small>
-                                <span class="fw-medium">${slot.therapist_name}</span>
+                            <div class="preferred-time-input">
+                                <label class="form-label">Select Your Preferred Time</label>
+                                <input type="time" 
+                                       class="form-control preferred-time" 
+                                       min="${slot.start_time}" 
+                                       max="${getMaxStartTime(slot.end_time, <?php echo $service['duration']; ?>)}"
+                                       data-therapist-id="${slot.therapist_id}"
+                                       data-slot-start="${slot.start_time}"
+                                       data-slot-end="${slot.end_time}">
+                                <div class="form-text">
+                                    Service duration: <?php echo $service['duration']; ?> minutes
+                                </div>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 `).join('');
                 
                 timeSlotsContainer.innerHTML = timeSlotsHtml;
                 
-                // Add click handlers for time slots
-                document.querySelectorAll('.time-slot').forEach(button => {
-                    button.addEventListener('click', function() {
-                        document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
+                // Add input handlers for preferred time
+                document.querySelectorAll('.preferred-time').forEach(input => {
+                    input.addEventListener('change', function() {
+                        document.querySelectorAll('.time-slot-card').forEach(card => 
+                            card.classList.remove('selected'));
+                        this.closest('.time-slot-card').classList.add('selected');
+                        
+                        // Calculate and display end time
+                        const startTime = this.value;
+                        const duration = <?php echo $service['duration']; ?>;
+                        const endTime = addMinutesToTime(startTime, duration);
+                        
+                        // Update or create end time display
+                        let endTimeDisplay = this.closest('.preferred-time-input').querySelector('.end-time-display');
+                        if (!endTimeDisplay) {
+                            endTimeDisplay = document.createElement('div');
+                            endTimeDisplay.className = 'form-text end-time-display';
+                            this.parentNode.appendChild(endTimeDisplay);
+                        }
+                        endTimeDisplay.textContent = `Service will end at: ${formatTime(endTime)}`;
+                        
+                        // Enable next button if time is selected
                         document.getElementById('nextStep').disabled = false;
                     });
                 });
@@ -354,20 +411,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    function formatTime(timeStr) {
-        return new Date('2000-01-01T' + timeStr).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-    }
-
     // Update next step handler
     document.getElementById('nextStep').addEventListener('click', function() {
         const selectedDate = datepicker.getDate('yyyy-mm-dd');
-        const selectedSlot = document.querySelector('.time-slot.active');
-        const therapistId = selectedSlot.dataset.therapistId;
-        const selectedTime = selectedSlot.dataset.time;
+        const selectedSlot = document.querySelector('.time-slot-card.selected');
+        const therapistId = selectedSlot.querySelector('.preferred-time').dataset.therapistId;
+        const selectedTime = selectedSlot.querySelector('.preferred-time').value;
         
         window.location.href = `${BASE_URL}/public/booking/confirm?` + 
             `service=<?php echo $service['service_id']; ?>` +
