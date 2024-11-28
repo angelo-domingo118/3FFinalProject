@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS Payments (
     promo_id INT DEFAULT NULL,
     original_amount DECIMAL(10,2) NOT NULL,
     discount_amount DECIMAL(10,2) DEFAULT 0.00,
+    final_amount DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (appointment_id) REFERENCES Appointments(appointment_id) ON DELETE CASCADE,
     FOREIGN KEY (promo_id) REFERENCES Promotions(promo_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

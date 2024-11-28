@@ -80,6 +80,77 @@
                 </div>
             </div>
 
+            <!-- Payment Options & Promo Code -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Payment Details</h5>
+                    <div class="row g-4">
+                        <!-- Payment Method Selection -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-credit-card fs-4 me-3 text-primary"></i>
+                                <div class="w-100">
+                                    <h6 class="mb-3">Payment Method</h6>
+                                    <div class="payment-methods">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" name="paymentMethod" id="cashPayment" value="cash" checked>
+                                            <label class="form-check-label" for="cashPayment">
+                                                <i class="bi bi-cash me-2"></i>Cash
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" name="paymentMethod" id="cardPayment" value="credit_card">
+                                            <label class="form-check-label" for="cardPayment">
+                                                <i class="bi bi-credit-card-2-front me-2"></i>Credit Card
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="paymentMethod" id="paypalPayment" value="paypal">
+                                            <label class="form-check-label" for="paypalPayment">
+                                                <i class="bi bi-paypal me-2"></i>PayPal
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Promo Code Section -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-tag fs-4 me-3 text-primary"></i>
+                                <div class="w-100">
+                                    <h6 class="mb-3">Promo Code</h6>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="promoCode" placeholder="Enter promo code">
+                                        <button class="btn btn-outline-primary" type="button" id="applyPromoBtn">Apply</button>
+                                    </div>
+                                    <div id="promoMessage" class="form-text mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="col-12">
+                            <div class="border-top pt-3 mt-2">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Original Price:</span>
+                                    <span class="original-price">₱<?php echo number_format($service['price'], 2); ?></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 discount-row" style="display: none !important;">
+                                    <span>Discount:</span>
+                                    <span class="discount-amount text-success">-₱0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total Amount:</span>
+                                    <span class="total-amount">₱<?php echo number_format($service['price'], 2); ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Terms and Conditions -->
             <div class="card mb-4">
                 <div class="card-body">
@@ -150,10 +221,93 @@
 </div>
 
 <script>
+// Define BASE_URL for JavaScript
+const BASE_URL = '<?php echo BASE_URL; ?>';
+
 document.addEventListener('DOMContentLoaded', function() {
     const confirmBookingBtn = document.getElementById('confirmBookingBtn');
     const termsCheckbox = document.getElementById('terms');
     const notesTextarea = document.getElementById('notes');
+
+    // Add promo code handling
+    const promoCodeInput = document.getElementById('promoCode');
+    const applyPromoBtn = document.getElementById('applyPromoBtn');
+    const promoMessage = document.getElementById('promoMessage');
+    const discountRow = document.querySelector('.discount-row');
+    const originalPrice = <?php echo $service['price']; ?>;
+    let discountedPrice = originalPrice;
+    let activePromoCode = null;
+
+    applyPromoBtn.addEventListener('click', function() {
+        const promoCode = promoCodeInput.value.trim().toUpperCase();
+        
+        if (!promoCode) {
+            showPromoMessage('Please enter a promo code', 'text-danger');
+            return;
+        }
+
+        // Send AJAX request to validate promo code
+        fetch(`${BASE_URL}/public/booking/validate-promo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                promo_code: promoCode,
+                service_id: <?php echo $service['service_id']; ?>,
+                amount: originalPrice
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const discount = (originalPrice * data.discount_percent) / 100;
+                discountedPrice = originalPrice - discount;
+                activePromoCode = promoCode;
+                
+                // Update UI
+                discountRow.style.display = 'flex';
+                document.querySelector('.discount-amount').textContent = 
+                    `-₱${discount.toFixed(2)}`;
+                document.querySelector('.total-amount').textContent = 
+                    `₱${discountedPrice.toFixed(2)}`;
+                
+                showPromoMessage(`${data.discount_percent}% discount applied successfully!`, 'text-success');
+                
+                // Disable input and button after successful application
+                promoCodeInput.disabled = true;
+                applyPromoBtn.disabled = true;
+            } else {
+                showPromoMessage(data.message || 'Invalid promo code', 'text-danger');
+                resetPromoCode();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showPromoMessage('Error validating promo code', 'text-danger');
+            resetPromoCode();
+        });
+    });
+
+    function showPromoMessage(message, className) {
+        promoMessage.textContent = message;
+        promoMessage.className = `form-text mt-2 ${className}`;
+    }
+
+    function resetPromoCode() {
+        discountedPrice = originalPrice;
+        activePromoCode = null;
+        discountRow.style.display = 'none';
+        document.querySelector('.total-amount').textContent = 
+            `₱${originalPrice.toFixed(2)}`;
+        promoCodeInput.disabled = false;
+        applyPromoBtn.disabled = false;
+    }
 
     confirmBookingBtn.addEventListener('click', function() {
         if (!termsCheckbox.checked) {
@@ -184,11 +338,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 date: '<?php echo $selectedDate; ?>',
                 time: '<?php echo $selectedTime; ?>',
                 therapist_id: <?php echo $therapist['user_id']; ?>,
-                notes: notesTextarea.value
+                notes: notesTextarea.value,
+                payment_method: document.querySelector('input[name="paymentMethod"]:checked').value,
+                promo_code: activePromoCode,
+                original_amount: originalPrice,
+                discount_amount: activePromoCode ? (originalPrice - discountedPrice) : 0,
+                final_amount: discountedPrice
             };
 
             // Send booking data to server
-            fetch('<?php echo BASE_URL; ?>/public/booking/process', {
+            fetch(`${BASE_URL}/public/booking/process`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

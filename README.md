@@ -57,10 +57,10 @@ git clone https://github.com/angelo-domingo118/SereneBook-Wellness-Appointment-B
 
 2. **Create the Database**:
    - In phpMyAdmin, click on **Databases**.
-   - Enter `booking_system` as the database name and click **Create**.
+   - Enter `spa_booking_db` as the database name and click **Create**.
 
 3. **Import the Schema**:
-   - Select the newly created `booking_system` database.
+   - Select the newly created `spa_booking_db` database.
    - Click on the **Import** tab.
    - Click **Choose File** and select the `sql/schema.sql` file from the cloned repository.
    - Click **Go** to import the database schema.
@@ -80,7 +80,7 @@ git clone https://github.com/angelo-domingo118/SereneBook-Wellness-Appointment-B
    define('DB_HOST', 'localhost');
    define('DB_USER', 'root');
    define('DB_PASS', ''); // Enter your MySQL password if any
-   define('DB_NAME', 'booking_system');
+   define('DB_NAME', 'spa_booking_db');
    ```
    
 ### 5. Set Up the Project in XAMPP

@@ -45,6 +45,9 @@ switch ($url[0]) {
                 case 'process':
                     $controller->process();
                     break;
+                case 'validate-promo':
+                    $controller->validatePromo();
+                    break;
                 default:
                     $controller->index();
             }

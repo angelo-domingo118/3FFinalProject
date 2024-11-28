@@ -182,6 +182,72 @@ class BookingController {
 
             $bookingId = $this->pdo->lastInsertId();
 
+            // Get promo_id if promo code was used
+            $promoId = null;
+            if (!empty($data['promo_code'])) {
+                $sql = "SELECT promo_id FROM Promotions 
+                        WHERE promo_code = ? 
+                        AND start_date <= CURRENT_DATE 
+                        AND end_date >= CURRENT_DATE 
+                        AND is_deleted = FALSE";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$data['promo_code']]);
+                $promo = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($promo) {
+                    $promoId = $promo['promo_id'];
+                }
+            }
+
+            // Generate transaction ID
+            $transactionId = 'TXN' . date('Ymd') . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+
+            // Insert payment record
+            $sql = "INSERT INTO Payments (
+                        appointment_id, amount, payment_method,
+                        payment_status, original_amount, discount_amount,
+                        promo_id, transaction_id, final_amount
+                    ) VALUES (
+                        :appointment_id, :amount, :payment_method,
+                        'unpaid', :original_amount, :discount_amount,
+                        :promo_id, :transaction_id, :final_amount
+                    )";
+
+            $stmt = $this->pdo->prepare($sql);
+            $success = $stmt->execute([
+                'appointment_id' => $bookingId,
+                'amount' => $data['final_amount'], 
+                'payment_method' => $data['payment_method'],
+                'original_amount' => $data['original_amount'],
+                'discount_amount' => $data['discount_amount'] ?? 0,
+                'promo_id' => $promoId,
+                'transaction_id' => $transactionId,
+                'final_amount' => $data['final_amount']
+            ]);
+
+            if (!$success) {
+                throw new Exception('Failed to create payment record');
+            }
+
+            // Update availability
+            $sql = "UPDATE Availability 
+                   SET is_deleted = TRUE 
+                   WHERE therapist_id = :therapist_id 
+                   AND date = :date 
+                   AND start_time <= :start_time 
+                   AND end_time >= :end_time";
+
+            $stmt = $this->pdo->prepare($sql);
+            $success = $stmt->execute([
+                'therapist_id' => $data['therapist_id'],
+                'date' => $data['date'],
+                'start_time' => $startTime->format('H:i:s'),
+                'end_time' => $endTime->format('H:i:s')
+            ]);
+
+            if (!$success) {
+                throw new Exception('Failed to update availability');
+            }
+
             // Commit transaction
             $this->pdo->commit();
 
@@ -201,6 +267,55 @@ class BookingController {
             echo json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    public function validatePromo() {
+        header('Content-Type: application/json');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+            return;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $promoCode = $data['promo_code'] ?? '';
+        
+        if (empty($promoCode)) {
+            echo json_encode(['success' => false, 'message' => 'Promo code is required']);
+            return;
+        }
+
+        try {
+            // Query the database for the promo code
+            $sql = "SELECT * FROM Promotions 
+                    WHERE promo_code = ? 
+                    AND start_date <= CURRENT_DATE 
+                    AND end_date >= CURRENT_DATE 
+                    AND is_deleted = FALSE";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$promoCode]);
+            $promo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($promo) {
+                echo json_encode([
+                    'success' => true,
+                    'discount_percent' => $promo['discount_percent'],
+                    'message' => 'Promo code applied successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Invalid or expired promo code'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error validating promo code'
             ]);
         }
         exit;
