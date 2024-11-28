@@ -26,33 +26,31 @@ class DashboardController {
 
     public function overview() {
         $userId = $_SESSION['user_id'];
-        $promotion = new Promotion($this->db);
         
-        // Get counts with default values
-        $counts = $this->appointment->getAppointmentCounts($userId) ?? [
-            'upcoming_count' => 0,
-            'completed_count' => 0
-        ];
+        // Get appointment counts
+        $counts = $this->appointment->getAppointmentCounts($userId);
+        $upcoming_count = $counts['upcoming_count'];
+        $completed_count = $counts['completed_count'];
         
-        // Get review count with default value
-        $reviewCount = $this->review->getTotalReviewCount($userId) ?? 0;
+        // Get upcoming appointments
+        $upcoming_appointments = $this->appointment->getUpcomingAppointments($userId);
         
-        // Get next appointment
-        $nextAppointment = $this->appointment->getNextAppointment($userId);
-        
-        // Get active promotions
-        $activePromotions = $promotion->getActivePromotions();
+        // Get review count
+        $reviews_count = $this->review->getTotalReviewCount($userId);
 
+        // Get active promotions
+        $promotion = new Promotion($this->db);
+        $promotions = $promotion->getActivePromotions();
+        
         $data = [
             'active_page' => 'overview',
-            'upcoming_count' => $counts['upcoming_count'] ?? 0,
-            'completed_count' => $counts['completed_count'] ?? 0,
-            'reviews_count' => $reviewCount,
-            'next_appointment' => $nextAppointment,
-            'promotions' => $activePromotions
+            'upcoming_count' => $upcoming_count,
+            'completed_count' => $completed_count,
+            'reviews_count' => $reviews_count,
+            'upcoming_appointments' => $upcoming_appointments,
+            'promotions' => $promotions
         ];
-
-        extract($data);
+        
         $content = '../app/views/dashboard/overview.php';
         include '../app/views/dashboard/layouts/dashboard.php';
     }

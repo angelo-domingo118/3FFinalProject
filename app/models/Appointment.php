@@ -34,6 +34,23 @@ class Appointment {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getUpcomingAppointments($userId) {
+        $sql = "SELECT a.*, s.service_name, s.duration, u.full_name as therapist_name
+                FROM Appointments a
+                JOIN Services s ON a.service_id = s.service_id
+                LEFT JOIN Users u ON a.therapist_id = u.user_id
+                WHERE a.user_id = ? 
+                AND a.status IN ('pending', 'confirmed')
+                AND a.appointment_date >= CURRENT_DATE
+                AND a.is_deleted = FALSE
+                ORDER BY a.appointment_date ASC, a.start_time ASC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // @deprecated Use getUpcomingAppointments() instead
     public function getNextAppointment($userId) {
         $sql = "SELECT a.*, s.service_name 
                 FROM Appointments a
@@ -131,5 +148,22 @@ class Appointment {
             error_log("Error getting all bookings: " . $e->getMessage());
             return [];
         }
+    }
+
+    public function isTimeSlotAvailable($date, $time, $therapistId, $excludeAppointmentId = null) {
+        $sql = "SELECT COUNT(*) as count FROM appointments 
+                WHERE appointment_date = ? 
+                AND start_time = ? 
+                AND therapist_id = ?
+                AND status IN ('pending', 'confirmed')";
+        $params = [$date, $time, $therapistId];
+        
+        if ($excludeAppointmentId) {
+            $sql .= " AND appointment_id != ?";
+            $params[] = $excludeAppointmentId;
+        }
+        
+        $result = $this->db->query($sql, $params);
+        return $result[0]['count'] == 0;
     }
 } 
