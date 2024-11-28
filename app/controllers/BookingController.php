@@ -158,11 +158,11 @@ class BookingController {
             $sql = "INSERT INTO Appointments (
                         user_id, service_id, therapist_id, 
                         appointment_date, start_time, end_time,
-                        notes, status, created_at
+                        notes, created_at
                     ) VALUES (
                         :user_id, :service_id, :therapist_id,
                         :date, :start_time, :end_time,
-                        :notes, 'confirmed', NOW()
+                        :notes, NOW()
                     )";
 
             $stmt = $this->pdo->prepare($sql);

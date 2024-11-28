@@ -131,7 +131,53 @@ For a cleaner URL, you can set up a virtual host:
 5. **Access via Virtual Host**:
    - Navigate to [http://serenebook.local](http://serenebook.local).
 
-## 🎉 Usage
+## 🚀 Getting Started
+
+### Test Accounts
+
+After importing the database schema, you can use these pre-configured test accounts:
+
+#### Admin Account
+- **Email**: admin@spa.com
+- **Password**: password
+- **Role**: Administrator
+- **Access**: Full system administration
+
+#### Customer Account
+- **Email**: customer@example.com
+- **Password**: password
+- **Role**: Customer
+- **Access**: Booking and appointment management
+
+#### Therapist Accounts
+1. **Maria Santos**
+   - Email: maria@spa.com
+   - Password: password
+   - Role: Therapist
+
+2. **Juan Cruz**
+   - Email: juan@spa.com
+   - Password: password
+   - Role: Therapist
+
+3. **Ana Reyes**
+   - Email: ana@spa.com
+   - Password: password
+   - Role: Therapist
+
+4. **Pedro Garcia**
+   - Email: pedro@spa.com
+   - Password: password
+   - Role: Therapist
+
+5. **Lisa Gomez**
+   - Email: lisa@spa.com
+   - Password: password
+   - Role: Therapist
+
+All accounts use the same password: `password` (hashed in the database)
+
+### Basic Usage
 
 Once the setup is complete, you can:
 
