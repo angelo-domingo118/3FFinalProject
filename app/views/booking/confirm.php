@@ -20,56 +20,61 @@
             <!-- Booking Summary -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-4">Booking Details</h5>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Service:</strong>
+                    <h5 class="card-title mb-4">Booking Summary</h5>
+                    <div class="row g-4">
+                        <!-- Service Details -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-bag-check fs-4 me-3 text-primary"></i>
+                                <div>
+                                    <h6 class="mb-1">Service</h6>
+                                    <p class="mb-0 fw-medium"><?php echo htmlspecialchars($service['service_name']); ?></p>
+                                    <p class="text-muted mb-0">
+                                        <i class="bi bi-clock-history me-1"></i><?php echo $service['duration']; ?> mins
+                                        <span class="mx-2">|</span>
+                                        <i class="bi bi-tag me-1"></i>₱<?php echo number_format($service['price'], 2); ?>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-8">
-                            <?php echo htmlspecialchars($service['service_name']); ?>
-                            <small class="text-muted d-block">
-                                Duration: <?php echo $service['duration']; ?> minutes
-                            </small>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Date:</strong>
+                        <!-- Date & Time -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-calendar-check fs-4 me-3 text-primary"></i>
+                                <div>
+                                    <h6 class="mb-1">Date & Time</h6>
+                                    <p class="mb-0 fw-medium"><?php echo date('l, F j, Y', strtotime($selectedDate)); ?></p>
+                                    <p class="mb-0 text-dark">
+                                        <i class="bi bi-clock me-1"></i><?php 
+                                            echo date('g:i A', strtotime($selectedTime)); 
+                                            // Calculate end time
+                                            $endTime = date('g:i A', strtotime($selectedTime . ' + ' . $service['duration'] . ' minutes'));
+                                            echo ' - ' . $endTime;
+                                        ?>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-8">
-                            <?php echo date('l, F j, Y', strtotime($selectedDate)); ?>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Time:</strong>
+                        <!-- Therapist -->
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-person-check fs-4 me-3 text-primary"></i>
+                                <div>
+                                    <h6 class="mb-1">Therapist</h6>
+                                    <p class="mb-0 fw-medium"><?php echo htmlspecialchars($therapist['full_name']); ?></p>
+                                    <p class="text-muted mb-0">Professional Therapist</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-8">
-                            <?php 
-                                echo date('g:i A', strtotime($selectedTime)) . ' - ' . 
-                                     date('g:i A', strtotime($selectedTime) + $service['duration'] * 60);
-                            ?>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Therapist:</strong>
-                        </div>
-                        <div class="col-md-8">
-                            <?php echo htmlspecialchars($therapist['full_name']); ?>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Price:</strong>
-                        </div>
-                        <div class="col-md-8">
-                            ₱<?php echo number_format($service['price'], 2); ?>
+                        <!-- Customer Notes -->
+                        <div class="col-12 mt-4">
+                            <div class="form-floating">
+                                <textarea class="form-control" id="notes" style="height: 100px" placeholder="Any special requests or notes?"></textarea>
+                                <label for="notes">Special Requests or Notes (Optional)</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -193,7 +198,25 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '<?php echo BASE_URL; ?>/public/booking/success';
+                    // Use SweetAlert for post-booking dialog
+                    Swal.fire({
+                        title: 'Booking Confirmed!',
+                        text: 'Would you like to book another service?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, book another service',
+                        cancelButtonText: 'No, go to dashboard'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect to services page
+                            window.location.href = '<?php echo BASE_URL; ?>/public/services';
+                        } else {
+                            // Redirect to user dashboard
+                            window.location.href = '<?php echo BASE_URL; ?>/public/dashboard';
+                        }
+                    });
                 } else {
                     alert(data.message || 'Failed to create booking. Please try again.');
                 }
@@ -206,5 +229,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Include SweetAlert2 for dialogs -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <?php include '../app/views/templates/footer.php'; ?>

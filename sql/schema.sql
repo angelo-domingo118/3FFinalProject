@@ -124,8 +124,12 @@ CREATE TABLE IF NOT EXISTS Payments (
     payment_status ENUM('paid', 'unpaid', 'refunded') DEFAULT 'unpaid',
     transaction_id VARCHAR(100),
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    promo_id INT DEFAULT NULL,
+    original_amount DECIMAL(10,2) NOT NULL,
+    discount_amount DECIMAL(10,2) DEFAULT 0.00,
     FOREIGN KEY (appointment_id) REFERENCES Appointments(appointment_id) ON DELETE CASCADE,
-    is_deleted BOOLEAN DEFAULT FALSE
+    FOREIGN KEY (promo_id) REFERENCES Promotions(promo_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Create Availability table
@@ -190,6 +194,14 @@ CREATE TABLE IF NOT EXISTS Promotions (
     end_date DATE NOT NULL,
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
+
+-- Insert sample promotions
+INSERT INTO Promotions (promo_code, description, discount_percent, start_date, end_date) VALUES
+('WELCOME2024', 'New Year Special Offer', 15.00, '2024-01-01', '2024-02-29'),
+('FIRSTTIME', 'First-time Customer Discount', 20.00, '2024-01-01', '2024-12-31'),
+('SUMMER24', 'Summer Season Special', 10.00, '2024-03-01', '2024-05-31'),
+('HOLIDAY', 'Holiday Season Discount', 25.00, '2024-12-01', '2024-12-31'),
+('WEEKEND', 'Weekend Special Offer', 5.00, '2024-01-01', '2024-12-31');
 
 -- Adding indexes for performance optimization
 CREATE INDEX idx_users_email ON Users(email);
