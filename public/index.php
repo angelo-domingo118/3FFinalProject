@@ -94,17 +94,28 @@ switch ($url[0]) {
         break;
     case 'admin':
         require_once '../app/controllers/AdminController.php';
+        $database = new Database();
+        $pdo = $database->connect();
         $controller = new AdminController($pdo);
         
         if (!isset($url[1])) {
             $controller->dashboard();
         } else {
-            $method = $url[1];
-            if (method_exists($controller, $method)) {
-                $controller->$method();
-            } else {
-                header("HTTP/1.0 404 Not Found");
-                include '../app/views/errors/404.php';
+            switch ($url[1]) {
+                case 'get-therapist-availability':
+                    $controller->getTherapistAvailability();
+                    break;
+                case 'therapists':
+                    $controller->therapists();
+                    break;
+                default:
+                    $method = $url[1];
+                    if (method_exists($controller, $method)) {
+                        $controller->$method();
+                    } else {
+                        header("HTTP/1.0 404 Not Found");
+                        include '../app/views/errors/404.php';
+                    }
             }
         }
         break;

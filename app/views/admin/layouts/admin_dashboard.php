@@ -43,11 +43,6 @@
                         <i class="bi bi-people me-3"></i> Therapists
                     </a>
                 </li>
-                <li class="<?php echo $active_page === 'schedule' ? 'active' : ''; ?>">
-                    <a href="<?php echo BASE_URL; ?>/public/admin/schedule" class="d-flex align-items-center p-3 rounded">
-                        <i class="bi bi-calendar3 me-3"></i> Schedule
-                    </a>
-                </li>
                 <li class="<?php echo $active_page === 'payments' ? 'active' : ''; ?>">
                     <a href="<?php echo BASE_URL; ?>/public/admin/payments" class="d-flex align-items-center p-3 rounded">
                         <i class="bi bi-credit-card me-3"></i> Payments
@@ -71,17 +66,10 @@
                     </button>
                     
                     <div class="ms-auto d-flex align-items-center">
-                        <div class="dropdown">
-                            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-2"></i>
-                                <?php echo $_SESSION['full_name']; ?>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/public/admin/profile">Profile</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="<?php echo BASE_URL; ?>/public/logout">Logout</a></li>
-                            </ul>
-                        </div>
+                        <span class="me-3"><?php echo $_SESSION['full_name']; ?></span>
+                        <a href="<?php echo BASE_URL; ?>/public/logout" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-box-arrow-right me-1"></i>Logout
+                        </a>
                     </div>
                 </div>
             </nav>
@@ -96,5 +84,8 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo BASE_URL; ?>/public/assets/js/admin.js"></script>
+    <?php if ($active_page === 'bookings'): ?>
+    <script src="<?php echo BASE_URL; ?>/public/assets/js/admin/bookings.js"></script>
+    <?php endif; ?>
 </body>
-</html> 
+</html>

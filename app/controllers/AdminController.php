@@ -3,22 +3,28 @@
 require_once __DIR__ . '/../models/Appointment.php';
 require_once __DIR__ . '/../models/Service.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../helpers/BookingHelper.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../models/Availability.php';
 
 class AdminController {
     private $db;
     private $appointment;
     private $service;
     private $user;
+    private $availability;
 
-    public function __construct($db) {
-        $this->db = $db;
-        $this->appointment = new Appointment($db);
-        $this->service = new Service($db);
-        $this->user = new User($db);
+    public function __construct() {
+        $database = new Database();
+        $this->db = $database->connect();
+        $this->appointment = new Appointment($this->db);
+        $this->service = new Service($this->db);
+        $this->user = new User($this->db);
+        $this->availability = new Availability($this->db);
 
         // Check if user is logged in and is admin
         if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 3) {
-            header('Location: ' . BASE_URL . '/public/login');
+            header('Location: ' . BASE_URL . '/login');
             exit;
         }
 
@@ -41,27 +47,52 @@ class AdminController {
     }
 
     public function bookings() {
-        // Get booking counts
-        $counts = $this->appointment->getBookingCounts();
-        
-        // Get bookings with filters
-        $filters = [
-            'status' => $_GET['status'] ?? null,
-            'date' => $_GET['date'] ?? null,
-            'therapist' => $_GET['therapist'] ?? null
-        ];
-        
-        $data = [
-            'active_page' => 'bookings',
-            'pending_count' => $counts['pending'] ?? 0,
-            'confirmed_count' => $counts['confirmed'] ?? 0,
-            'completed_count' => $counts['completed'] ?? 0,
-            'cancelled_count' => $counts['canceled'] ?? 0,
-            'bookings' => $this->appointment->getAllBookings($filters) ?? []
-        ];
+        try {
+            // Get booking counts
+            $counts = $this->appointment->getBookingCounts();
+            error_log("Booking counts: " . print_r($counts, true));
+            
+            // Get all therapists for the filter dropdown
+            $therapists = $this->user->getTherapists();
+            error_log("Therapists: " . print_r($therapists, true));
+            
+            // Get bookings with filters
+            $filters = [
+                'status' => $_GET['status'] ?? null,
+                'date' => $_GET['date'] ?? null,
+                'therapist' => $_GET['therapist'] ?? null
+            ];
+            error_log("Applied filters: " . print_r($filters, true));
+            
+            // Get bookings
+            $bookings = $this->appointment->getAllBookings($filters);
+            error_log("Retrieved bookings: " . count($bookings));
+            
+            $data = [
+                'active_page' => 'bookings',
+                'pending_count' => $counts['pending'] ?? 0,
+                'confirmed_count' => $counts['confirmed'] ?? 0,
+                'completed_count' => $counts['completed'] ?? 0,
+                'cancelled_count' => $counts['canceled'] ?? 0,
+                'bookings' => $bookings,
+                'therapists' => $therapists ?? []
+            ];
+            error_log("View data: " . print_r($data, true));
 
-        $content = '../app/views/admin/bookings.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
+            $content = __DIR__ . '/../views/admin/bookings.php';
+            include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+            
+        } catch (Exception $e) {
+            error_log("Error in bookings method: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            // Handle error appropriately
+            $data = [
+                'active_page' => 'bookings',
+                'error' => 'An error occurred while loading bookings.'
+            ];
+            $content = __DIR__ . '/../views/admin/bookings.php';
+            include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+        }
     }
 
     public function services() {
@@ -72,8 +103,9 @@ class AdminController {
             'services' => $services
         ];
 
-        $content = '../app/views/admin/services.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
+        $content = __DIR__ . '/../views/admin/services.php';
+        extract($data);
+        include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
     }
 
     public function therapists() {
@@ -84,19 +116,10 @@ class AdminController {
             'therapists' => $therapists
         ];
 
-        $content = '../app/views/admin/therapists.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
-    }
-
-    public function schedule() {
-        $data = [
-            'active_page' => 'schedule',
-            'therapists' => $this->user->getTherapists(),
-            'appointments' => $this->appointment->getAllBookings(['status' => 'confirmed'])
-        ];
-
-        $content = '../app/views/admin/schedule.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
+        extract($data);
+        
+        $content = __DIR__ . '/../views/admin/therapists.php';
+        include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
     }
 
     public function payments() {
@@ -104,8 +127,8 @@ class AdminController {
             'active_page' => 'payments'
         ];
 
-        $content = '../app/views/admin/payments.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
+        $content = __DIR__ . '/../views/admin/payments.php';
+        include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
     }
 
     public function reports() {
@@ -113,7 +136,47 @@ class AdminController {
             'active_page' => 'reports'
         ];
 
-        $content = '../app/views/admin/reports.php';
-        include '../app/views/admin/layouts/admin_dashboard.php';
+        $content = __DIR__ . '/../views/admin/reports.php';
+        include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+    }
+
+    public function getTherapistAvailability() {
+        error_log("getTherapistAvailability called");
+        error_log("GET params: " . print_r($_GET, true));
+        
+        if (!isset($_GET['therapist_id']) || !isset($_GET['week_start'])) {
+            error_log('Missing parameters in getTherapistAvailability');
+            echo json_encode(['error' => 'Missing required parameters']);
+            return;
+        }
+
+        $therapistId = $_GET['therapist_id'];
+        $weekStart = $_GET['week_start'];
+        
+        try {
+            error_log("Fetching availability for therapist $therapistId from $weekStart");
+            
+            // Get availability for the specified week
+            $availability = $this->availability->getTherapistWeeklyAvailability(
+                $therapistId, 
+                $weekStart
+            );
+            
+            error_log('Availability data: ' . print_r($availability, true));
+            
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'availability' => $availability
+            ]);
+        } catch (Exception $e) {
+            error_log('Error in getTherapistAvailability: ' . $e->getMessage());
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => 'Failed to load availability',
+                'message' => $e->getMessage()
+            ]);
+        }
+        exit;
     }
 } 
