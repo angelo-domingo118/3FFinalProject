@@ -359,21 +359,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     // Use SweetAlert for post-booking dialog
                     Swal.fire({
-                        title: 'Booking Confirmed!',
-                        text: 'Would you like to book another service?',
+                        title: 'Booking Submitted!',
+                        html: 'Your booking request has been submitted successfully.<br><br>' +
+                              'Please wait for approval from our staff. You will receive a confirmation via email and you can also check the status in your dashboard.',
                         icon: 'success',
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, book another service',
-                        cancelButtonText: 'No, go to dashboard'
+                        confirmButtonText: 'View in Dashboard',
+                        cancelButtonText: 'Book Another Service'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Redirect to services page
-                            window.location.href = '<?php echo BASE_URL; ?>/public/services';
-                        } else {
                             // Redirect to user dashboard
                             window.location.href = '<?php echo BASE_URL; ?>/public/dashboard';
+                        } else {
+                            // Redirect to services page
+                            window.location.href = '<?php echo BASE_URL; ?>/public/services';
                         }
                     });
                 } else {
