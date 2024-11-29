@@ -1,6 +1,13 @@
 <?php
 // public/index.php
 
+// Prevent errors from being displayed in the output
+error_reporting(0);
+ini_set('display_errors', 0);
+
+// Start output buffering
+ob_start();
+
 session_start();
 
 require_once '../config/config.php';
@@ -63,11 +70,21 @@ switch ($url[0]) {
         require_once '../app/controllers/DashboardController.php';
         $controller = new DashboardController($pdo);
         if (isset($url[1])) {
-            $method = $url[1];
-            if (method_exists($controller, $method)) {
-                $controller->$method();
+            if ($url[1] === 'profile' && isset($url[2])) {
+                if ($url[2] === 'update') {
+                    // Handle profile update
+                    $controller->updateProfile();
+                } else if ($url[2] === 'password') {
+                    // Handle password update
+                    $controller->updatePassword();
+                }
             } else {
-                echo "404 Not Found";
+                $method = $url[1];
+                if (method_exists($controller, $method)) {
+                    $controller->$method();
+                } else {
+                    echo "404 Not Found";
+                }
             }
         } else {
             $controller->overview();
@@ -117,6 +134,23 @@ switch ($url[0]) {
                         include '../app/views/errors/404.php';
                     }
             }
+        }
+        break;
+    case 'api':
+        if (isset($url[1]) && $url[1] === 'appointments') {
+            require_once '../app/controllers/api/AppointmentApiController.php';
+            $controller = new AppointmentApiController($pdo);
+            
+            if (isset($url[2])) {
+                $method = $url[2];
+                if (method_exists($controller, $method)) {
+                    $controller->$method();
+                    exit;
+                }
+            }
+            http_response_code(404);
+            echo json_encode(['error' => 'API endpoint not found']);
+            exit;
         }
         break;
     default:

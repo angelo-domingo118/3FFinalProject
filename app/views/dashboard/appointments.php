@@ -266,130 +266,438 @@
 </div>
 
 <!-- Reschedule Modal -->
-<div class="modal fade" id="rescheduleModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reschedule Appointment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="rescheduleForm">
-                    <input type="hidden" name="appointment_id" id="rescheduleAppointmentId">
-                    <div class="mb-3">
-                        <label class="form-label">New Date</label>
-                        <input type="date" class="form-control" name="new_date" required 
-                               min="<?php echo date('Y-m-d'); ?>">
+<?php foreach ($appointments as $appointment): ?>
+    <div class="modal fade" id="rescheduleModal<?php echo $appointment['appointment_id']; ?>" tabindex="-1" aria-labelledby="rescheduleModalLabel<?php echo $appointment['appointment_id']; ?>" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="rescheduleModalLabel<?php echo $appointment['appointment_id']; ?>">
+                        <i class="bi bi-calendar2-check me-2 text-primary"></i>Reschedule Appointment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <!-- Current Appointment Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-3 text-muted">Current Appointment</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><?php echo htmlspecialchars($appointment['service_name']); ?></h6>
+                                    <p class="text-dark mb-0">
+                                        <i class="bi bi-clock me-2"></i><?php echo date('g:i A', strtotime($appointment['start_time'])); ?> - 
+                                        <?php 
+                                            $endTime = strtotime($appointment['start_time'] . ' + ' . $appointment['duration'] . ' minutes');
+                                            echo date('g:i A', $endTime);
+                                        ?>
+                                        <span class="mx-2">·</span>
+                                        <i class="bi bi-calendar3 me-2"></i><?php echo date('M d, Y', strtotime($appointment['appointment_date'])); ?>
+                                    </p>
+                                </div>
+                                <span class="badge bg-primary"><?php echo $appointment['duration']; ?> mins</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Time</label>
-                        <select class="form-select" name="new_time" required>
-                            <?php
-                            $start = strtotime('9:00');
-                            $end = strtotime('17:00');
-                            for ($time = $start; $time <= $end; $time += 1800) {
-                                echo '<option value="' . date('H:i:s', $time) . '">' . date('g:i A', $time) . '</option>';
-                            }
-                            ?>
-                        </select>
+
+                    <!-- Date and Therapist Selection -->
+                    <div class="row g-4">
+                        <!-- Calendar -->
+                        <div class="col-md-5">
+                            <div class="card h-100 shadow-sm calendar-card">
+                                <div class="card-body">
+                                    <h6 class="card-title d-flex align-items-center mb-4">
+                                        <i class="bi bi-calendar-date me-2 text-primary"></i>Select New Date
+                                    </h6>
+                                    <div class="calendar-wrapper">
+                                        <div id="datepicker-<?php echo $appointment['appointment_id']; ?>" class="datepicker-lg"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Therapist Selection -->
+                        <div class="col-md-7">
+                            <div class="card h-100 shadow-sm therapist-section">
+                                <div class="card-body">
+                                    <h6 class="card-title d-flex align-items-center mb-4">
+                                        <i class="bi bi-person-badge me-2 text-primary"></i>Available Therapists
+                                    </h6>
+                                    <div id="therapist-list-<?php echo $appointment['appointment_id']; ?>" class="therapist-list">
+                                        <div class="text-center p-4">
+                                            <i class="bi bi-calendar-plus display-4 text-muted mb-3"></i>
+                                            <p class="text-muted mb-0">Please select a date to view available therapists</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Selection -->
+                        <div class="col-12">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title d-flex align-items-center mb-4">
+                                        <i class="bi bi-clock me-2 text-primary"></i>Select New Time
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Preferred Start Time</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                                    <input type="time" class="form-control" id="time-select-<?php echo $appointment['appointment_id']; ?>" disabled required>
+                                                </div>
+                                                <div class="form-text" id="therapist-hours-<?php echo $appointment['appointment_id']; ?>">
+                                                    <i class="bi bi-info-circle me-1"></i>Please select a therapist first
+                                                </div>
+                                                <div class="form-text">
+                                                    <i class="bi bi-stopwatch me-1"></i>Service duration: 
+                                                    <span id="service-duration-<?php echo $appointment['appointment_id']; ?>" class="fw-medium">90</span> minutes
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="alert alert-info d-flex align-items-center">
+                                                <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                                <div>
+                                                    Your service will end at<br>
+                                                    <span id="end-time-<?php echo $appointment['appointment_id']; ?>" class="fs-5 fw-bold">--:--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reason for Rescheduling</label>
-                        <textarea class="form-control" name="reason" rows="3" 
-                                 placeholder="Please provide a reason for rescheduling..." required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="submitReschedule()">
-                    <i class="bi bi-calendar2-check me-2"></i>Confirm Reschedule
-                </button>
+                </div>
+                <div class="modal-footer border-0 pt-2">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary px-4" onclick="submitReschedule(<?php echo $appointment['appointment_id']; ?>)">
+                        <i class="bi bi-check2 me-1"></i>Confirm Reschedule
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+<?php endforeach; ?>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/css/datepicker.min.css">
+<script src="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/js/datepicker.min.js"></script>
 
 <style>
-.appointment-card {
-    transition: transform 0.2s;
-}
-.appointment-card:hover {
-    transform: translateY(-2px);
-}
-.appointment-date {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-.rating .btn-outline-warning {
-    min-width: 60px;
-}
-.rating .btn-outline-warning:hover {
-    background-color: #ffc107;
-    color: #000;
-}
-.rating .btn-check:checked + .btn-outline-warning {
-    background-color: #ffc107;
-    color: #000;
-}
+    /* Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+    }
+
+    .modal-footer {
+        border-bottom-left-radius: 1rem;
+        border-bottom-right-radius: 1rem;
+    }
+
+    /* Calendar Styling */
+    .calendar-wrapper {
+        background: #fff;
+        border-radius: 0.5rem;
+    }
+
+    .datepicker-lg {
+        font-size: 0.9rem;
+    }
+
+    .calendar-card {
+        border: none;
+        background: #fff;
+    }
+
+    /* Therapist List Styling */
+    .therapist-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        width: 100%;
+    }
+
+    .therapist-card {
+        width: 100%;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 0.75rem;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 350px;
+    }
+
+    .therapist-card:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+        border-color: #dee2e6;
+    }
+
+    .therapist-card.active {
+        background-color: #e3f2fd;
+        border-color: #90caf9;
+        box-shadow: 0 4px 6px rgba(13, 110, 253, 0.08);
+    }
+
+    .therapist-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex: 1;
+    }
+
+    .therapist-avatar {
+        width: 48px;
+        height: 48px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .therapist-avatar i {
+        font-size: 1.5rem;
+        color: #6c757d;
+    }
+
+    .therapist-details {
+        flex: 1;
+    }
+
+    .therapist-name {
+        color: #212529;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .therapist-time {
+        display: flex;
+        align-items: center;
+        color: #6c757d;
+        font-size: 0.9rem;
+        gap: 0.5rem;
+    }
+
+    .therapist-time i {
+        font-size: 0.9rem;
+    }
+
+    .therapist-arrow {
+        color: #adb5bd;
+        font-size: 1.25rem;
+        margin-left: 1rem;
+    }
+
+    /* Update the existing styles */
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.2s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+    }
+
+    .input-group .form-control:focus {
+        border-color: #dee2e6;
+        box-shadow: none;
+    }
+
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-radius: 0.375rem;
+    }
+
+    .alert-info {
+        background-color: #e3f2fd;
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #f8f9fa;
+    }
+
+    .btn-light:hover {
+        background-color: #e9ecef;
+        border-color: #e9ecef;
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 1em;
+    }
+
+    .form-text {
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .appointment-card {
+        transition: transform 0.2s;
+    }
+
+    .appointment-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .appointment-date {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .rating .btn-outline-warning {
+        min-width: 60px;
+    }
+
+    .rating .btn-outline-warning:hover {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .rating .btn-check:checked + .btn-outline-warning {
+        background-color: #ffc107;
+        color: #000;
+    }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // View toggle functionality
-    const cardView = document.getElementById('cardView');
-    const listView = document.getElementById('listView');
-    const appointmentsCardView = document.getElementById('appointmentsCardView');
-    const appointmentsListView = document.getElementById('appointmentsListView');
-
-    cardView.addEventListener('change', function() {
-        appointmentsCardView.style.display = 'block';
-        appointmentsListView.style.display = 'none';
-        localStorage.setItem('appointmentsViewMode', 'card');
-    });
-
-    listView.addEventListener('change', function() {
-        appointmentsCardView.style.display = 'none';
-        appointmentsListView.style.display = 'block';
-        localStorage.setItem('appointmentsViewMode', 'list');
-    });
-
-    // Load saved view preference
-    const savedViewMode = localStorage.getItem('appointmentsViewMode');
-    if (savedViewMode === 'list') {
-        listView.checked = true;
-        appointmentsCardView.style.display = 'none';
-        appointmentsListView.style.display = 'block';
-    }
-});
-
-// Reschedule functionality
-function rescheduleAppointment(appointmentId) {
-    document.getElementById('rescheduleAppointmentId').value = appointmentId;
-    new bootstrap.Modal(document.getElementById('rescheduleModal')).show();
-}
-
-function submitReschedule() {
-    const form = document.getElementById('rescheduleForm');
-    const formData = new FormData(form);
+    window.BASE_URL = '<?php echo BASE_URL; ?>';
     
-    fetch(`${BASE_URL}/public/api/appointments/reschedule`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert(data.message || 'Error rescheduling appointment');
+    document.addEventListener('DOMContentLoaded', function() {
+        // View toggle functionality
+        const cardView = document.getElementById('cardView');
+        const listView = document.getElementById('listView');
+        const appointmentsCardView = document.getElementById('appointmentsCardView');
+        const appointmentsListView = document.getElementById('appointmentsListView');
+
+        cardView.addEventListener('change', function() {
+            appointmentsCardView.style.display = 'block';
+            appointmentsListView.style.display = 'none';
+            localStorage.setItem('appointmentsViewMode', 'card');
+        });
+
+        listView.addEventListener('change', function() {
+            appointmentsCardView.style.display = 'none';
+            appointmentsListView.style.display = 'block';
+            localStorage.setItem('appointmentsViewMode', 'list');
+        });
+
+        // Load saved view preference
+        const savedViewMode = localStorage.getItem('appointmentsViewMode');
+        if (savedViewMode === 'list') {
+            listView.checked = true;
+            appointmentsCardView.style.display = 'none';
+            appointmentsListView.style.display = 'block';
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error rescheduling appointment');
     });
-}
+
+    // Reschedule functionality
+    function rescheduleAppointment(appointmentId) {
+        document.getElementById('rescheduleAppointmentId').value = appointmentId;
+        new bootstrap.Modal(document.getElementById('rescheduleModal' + appointmentId)).show();
+    }
+
+    function submitReschedule(appointmentId) {
+        const form = document.getElementById('rescheduleForm');
+        const formData = new FormData(form);
+        
+        fetch(`${BASE_URL}/public/api/appointments/reschedule`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error rescheduling appointment');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error rescheduling appointment');
+        });
+    }
+
+    function createTherapistCard(therapist) {
+        return `
+            <div class="therapist-card" 
+                 data-therapist-id="${therapist.id}"
+                 data-date="${therapist.date}"
+                 data-start-time="${therapist.start_time}"
+                 data-end-time="${therapist.end_time}">
+                <div class="therapist-info">
+                    <div class="therapist-avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="therapist-details">
+                        <div class="therapist-name">${therapist.name}</div>
+                        <div class="therapist-time">
+                            <i class="bi bi-clock"></i>
+                            <span>${formatTime(therapist.start_time)} - ${formatTime(therapist.end_time)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="therapist-arrow">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </div>
+        `;
+    }
+
+    // Add time input change handler
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listener for all time inputs in reschedule modals
+        document.querySelectorAll('[id^="time-select-"]').forEach(timeInput => {
+            timeInput.addEventListener('change', function() {
+                const appointmentId = this.id.split('-')[2];
+                updateEndTime(appointmentId, this.value);
+            });
+        });
+    });
 </script>
+
+<script src="<?php echo BASE_URL; ?>/public/assets/js/dashboard.js"></script>

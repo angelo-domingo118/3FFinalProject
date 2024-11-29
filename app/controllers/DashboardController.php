@@ -136,4 +136,121 @@ class DashboardController {
         $content = '../app/views/dashboard/promotions.php';
         include '../app/views/dashboard/layouts/dashboard.php';
     }
+
+    public function cancelAppointment() {
+        // Clear any previous output
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Set proper JSON headers
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('X-Content-Type-Options: nosniff');
+        
+        try {
+            if (!isset($_POST['appointment_id'])) {
+                throw new Exception('Appointment ID is required');
+            }
+
+            $userId = $_SESSION['user_id'];
+            $appointmentId = $_POST['appointment_id'];
+
+            if ($this->appointment->cancelAppointment($appointmentId, $userId)) {
+                die(json_encode(['success' => true]));
+            } else {
+                throw new Exception('Failed to cancel appointment');
+            }
+        } catch (Exception $e) {
+            http_response_code(400);
+            die(json_encode(['error' => $e->getMessage()]));
+        }
+    }
+
+    public function updateProfile() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '/public/dashboard/profile');
+            exit;
+        }
+
+        $userId = $_SESSION['user_id'];
+        $data = [
+            'full_name' => $_POST['full_name'],
+            'email' => $_POST['email'],
+            'phone_number' => $_POST['phone_number']
+        ];
+
+        try {
+            // Validate email format
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Invalid email format');
+            }
+
+            // Check if email is already taken by another user
+            $existingUser = $this->user->findByEmail($data['email']);
+            if ($existingUser && $existingUser['user_id'] != $userId) {
+                throw new Exception('Email is already taken');
+            }
+
+            if ($this->user->updateProfile($userId, $data)) {
+                $_SESSION['full_name'] = $data['full_name']; // Update session name
+                $_SESSION['success'] = 'Profile updated successfully';
+            } else {
+                throw new Exception('Failed to update profile');
+            }
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
+        }
+
+        header('Location: ' . BASE_URL . '/public/dashboard/profile');
+        exit;
+    }
+
+    public function updatePassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '/public/dashboard/profile');
+            exit;
+        }
+
+        $userId = $_SESSION['user_id'];
+        $currentPassword = $_POST['current_password'];
+        $newPassword = $_POST['new_password'];
+        $confirmPassword = $_POST['confirm_password'];
+
+        try {
+            // Get current user data
+            $user = $this->user->getUserById($userId);
+            if (!$user) {
+                throw new Exception('User not found');
+            }
+
+            // Verify current password
+            if (!password_verify($currentPassword, $user['password'])) {
+                throw new Exception('Current password is incorrect');
+            }
+
+            // Validate new password
+            if (strlen($newPassword) < 6) {
+                throw new Exception('New password must be at least 6 characters long');
+            }
+
+            // Check if new passwords match
+            if ($newPassword !== $confirmPassword) {
+                throw new Exception('New passwords do not match');
+            }
+
+            // Update password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            if ($this->user->updatePassword($userId, $hashedPassword)) {
+                $_SESSION['success'] = 'Password updated successfully';
+            } else {
+                throw new Exception('Failed to update password');
+            }
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
+        }
+
+        header('Location: ' . BASE_URL . '/public/dashboard/profile');
+        exit;
+    }
 } 

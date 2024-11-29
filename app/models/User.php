@@ -75,17 +75,10 @@ class User {
         ]);
     }
 
-    public function updatePassword($userId, $newPassword) {
-        $sql = "UPDATE Users SET 
-                password = ?, 
-                updated_at = CURRENT_TIMESTAMP 
-                WHERE user_id = ?";
-        
+    public function updatePassword($userId, $hashedPassword) {
+        $sql = "UPDATE Users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            password_hash($newPassword, PASSWORD_DEFAULT),
-            $userId
-        ]);
+        return $stmt->execute([$hashedPassword, $userId]);
     }
 
     public function verifyPassword($userId, $password) {
