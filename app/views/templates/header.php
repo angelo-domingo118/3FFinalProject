@@ -149,9 +149,9 @@
                                 <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/public/profile">
+                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/public/dashboard/profile">
                                     <i class="bi bi-person me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/public/appointments">
+                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/public/dashboard/appointments">
                                     <i class="bi bi-calendar-check me-2"></i>My Appointments</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="<?php echo BASE_URL; ?>/public/logout">

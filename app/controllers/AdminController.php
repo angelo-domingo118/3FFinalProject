@@ -49,10 +49,12 @@ class AdminController {
     public function bookings() {
         try {
             // Get booking counts
+            error_log("Starting to fetch booking counts...");
             $counts = $this->appointment->getBookingCounts();
             error_log("Booking counts: " . print_r($counts, true));
             
             // Get all therapists for the filter dropdown
+            error_log("Starting to fetch therapists...");
             $therapists = $this->user->getTherapists();
             error_log("Therapists: " . print_r($therapists, true));
             
@@ -65,8 +67,10 @@ class AdminController {
             error_log("Applied filters: " . print_r($filters, true));
             
             // Get bookings
+            error_log("Starting to fetch all bookings...");
             $bookings = $this->appointment->getAllBookings($filters);
-            error_log("Retrieved bookings: " . count($bookings));
+            error_log("Retrieved bookings count: " . count($bookings));
+            error_log("First booking: " . print_r(!empty($bookings) ? $bookings[0] : 'No bookings', true));
             
             $data = [
                 'active_page' => 'bookings',
@@ -77,15 +81,24 @@ class AdminController {
                 'bookings' => $bookings,
                 'therapists' => $therapists ?? []
             ];
-            error_log("View data: " . print_r($data, true));
+            error_log("View data prepared: " . print_r($data, true));
 
             $content = __DIR__ . '/../views/admin/bookings.php';
             include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
             
-        } catch (Exception $e) {
-            error_log("Error in bookings method: " . $e->getMessage());
+        } catch (PDOException $e) {
+            error_log("Database error in bookings method: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
             error_log("Stack trace: " . $e->getTraceAsString());
-            // Handle error appropriately
+            $data = [
+                'active_page' => 'bookings',
+                'error' => 'A database error occurred while loading bookings.'
+            ];
+            $content = __DIR__ . '/../views/admin/bookings.php';
+            include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+        } catch (Exception $e) {
+            error_log("General error in bookings method: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             $data = [
                 'active_page' => 'bookings',
                 'error' => 'An error occurred while loading bookings.'

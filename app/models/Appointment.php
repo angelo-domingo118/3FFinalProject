@@ -50,7 +50,6 @@ class Appointment {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // @deprecated Use getUpcomingAppointments() instead
     public function getNextAppointment($userId) {
         $sql = "SELECT a.*, s.service_name 
                 FROM Appointments a
@@ -105,7 +104,7 @@ class Appointment {
                     COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
                     COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
                     COUNT(CASE WHEN status = 'canceled' THEN 1 END) as canceled
-                    FROM appointments
+                    FROM Appointments
                     WHERE is_deleted = FALSE";
             
             error_log("Executing booking counts query: " . $sql);
@@ -156,16 +155,32 @@ class Appointment {
 
     public function getAllBookings($filters = []) {
         try {
-            $sql = "SELECT a.*, s.service_name, 
-                           u1.full_name as customer_name,
-                           u2.full_name as therapist_name,
-                           COALESCE(p.status, 'pending') as payment_status
-                    FROM appointments a
-                    JOIN services s ON a.service_id = s.service_id
-                    JOIN users u1 ON a.user_id = u1.user_id
-                    LEFT JOIN users u2 ON a.therapist_id = u2.user_id
-                    LEFT JOIN payments p ON a.appointment_id = p.appointment_id
-                    WHERE a.is_deleted = FALSE";
+            // First, let's check if there are any appointments at all
+            $checkSql = "SELECT COUNT(*) as count FROM Appointments WHERE is_deleted = FALSE";
+            $checkStmt = $this->db->prepare($checkSql);
+            $checkStmt->execute();
+            $count = $checkStmt->fetch(PDO::FETCH_ASSOC)['count'];
+            error_log("Total appointments in database: " . $count);
+
+            // Basic query without joins first to verify data
+            if ($count == 0) {
+                error_log("No appointments found in database");
+                return [];
+            }
+
+            $sql = "SELECT 
+                    a.*,
+                    s.service_name,
+                    s.price as service_price,
+                    u1.full_name as customer_name,
+                    u1.email as customer_email,
+                    u1.phone_number as customer_phone,
+                    u2.full_name as therapist_name
+                FROM Appointments a
+                LEFT JOIN Services s ON a.service_id = s.service_id
+                LEFT JOIN Users u1 ON a.user_id = u1.user_id
+                LEFT JOIN Users u2 ON a.therapist_id = u2.user_id
+                WHERE a.is_deleted = FALSE";
             
             $params = [];
             
@@ -185,48 +200,49 @@ class Appointment {
                 $params[] = $filters['therapist'];
             }
             
-            $sql .= " ORDER BY a.appointment_date DESC, a.start_time DESC";
+            // Order by most recent first
+            $sql .= " ORDER BY a.created_at DESC";
             
             if (!empty($filters['limit'])) {
                 $sql .= " LIMIT ?";
                 $params[] = (int)$filters['limit'];
             }
             
-            // Debug log
-            error_log("SQL Query: " . $sql);
-            error_log("Params: " . print_r($params, true));
+            error_log("Executing getAllBookings query: " . $sql);
+            error_log("With parameters: " . print_r($params, true));
             
             $stmt = $this->db->prepare($sql);
             if (!$stmt) {
-                error_log("Prepare failed: " . print_r($this->db->errorInfo(), true));
+                error_log("Failed to prepare getAllBookings query: " . print_r($this->db->errorInfo(), true));
                 return [];
             }
             
             $success = $stmt->execute($params);
             if (!$success) {
-                error_log("Execute failed: " . print_r($stmt->errorInfo(), true));
+                error_log("Failed to execute getAllBookings query: " . print_r($stmt->errorInfo(), true));
                 return [];
             }
             
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("Number of results: " . count($results));
-            error_log("Results: " . print_r($results, true));
+            error_log("Found " . count($results) . " bookings");
             
             return $results;
             
         } catch (PDOException $e) {
-            error_log("Error getting all bookings: " . $e->getMessage());
+            error_log("Database error in getAllBookings: " . $e->getMessage());
+            error_log("SQL State: " . $e->getCode());
             error_log("Stack trace: " . $e->getTraceAsString());
             return [];
         }
     }
 
     public function isTimeSlotAvailable($date, $time, $therapistId, $excludeAppointmentId = null) {
-        $sql = "SELECT COUNT(*) as count FROM appointments 
+        $sql = "SELECT COUNT(*) as count FROM Appointments 
                 WHERE appointment_date = ? 
                 AND start_time = ? 
                 AND therapist_id = ?
-                AND status IN ('pending', 'confirmed')";
+                AND status != 'canceled'
+                AND is_deleted = FALSE";
         $params = [$date, $time, $therapistId];
         
         if ($excludeAppointmentId) {
