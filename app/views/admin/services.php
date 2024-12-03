@@ -74,7 +74,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-<?php echo $service['service_type'] === 'massage' ? 'info' : ($service['service_type'] === 'facial' ? 'success' : 'warning'); ?> text-nowrap">
-                                            <?php echo ucfirst(htmlspecialchars($service['service_type'])); ?>
+                                            <?php echo $service['service_type']; ?>
                                         </span>
                                     </td>
                                     <td class="text-nowrap"><?php echo $service['duration']; ?> mins</td>
@@ -205,3 +205,6 @@
         </div>
     </div>
 </div>
+
+<!-- Add your custom scripts -->
+<script src="/cit17-final-project/public/assets/js/admin/services.js"></script>

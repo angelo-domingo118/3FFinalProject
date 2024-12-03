@@ -77,7 +77,7 @@ class AdminController {
                 'pending_count' => $counts['pending'] ?? 0,
                 'confirmed_count' => $counts['confirmed'] ?? 0,
                 'completed_count' => $counts['completed'] ?? 0,
-                'cancelled_count' => $counts['canceled'] ?? 0,
+                'canceled_count' => $counts['canceled'] ?? 0,
                 'bookings' => $bookings,
                 'therapists' => $therapists ?? []
             ];
@@ -136,12 +136,42 @@ class AdminController {
     }
 
     public function payments() {
-        $data = [
-            'active_page' => 'payments'
-        ];
+        try {
+            // Get payments data
+            $query = "SELECT 
+                        payment_id,
+                        appointment_id,
+                        amount,
+                        payment_method,
+                        payment_status,
+                        transaction_id,
+                        payment_date,
+                        is_deleted,
+                        promo_id,
+                        original_amount,
+                        discount_amount,
+                        final_amount
+                    FROM payments
+                    WHERE is_deleted = 0
+                    ORDER BY payment_date DESC";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $data = [
+                'active_page' => 'payments',
+                'payments' => $payments
+            ];
 
-        $content = __DIR__ . '/../views/admin/payments.php';
-        include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+            $content = __DIR__ . '/../views/admin/payments.php';
+            include __DIR__ . '/../views/admin/layouts/admin_dashboard.php';
+            
+        } catch (PDOException $e) {
+            error_log("Error in AdminController::payments: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            require_once '../app/views/errors/500.php';
+        }
     }
 
     public function reports() {
@@ -154,36 +184,42 @@ class AdminController {
     }
 
     public function getTherapistAvailability() {
-        error_log("getTherapistAvailability called");
-        error_log("GET params: " . print_r($_GET, true));
-        
-        if (!isset($_GET['therapist_id']) || !isset($_GET['week_start'])) {
-            error_log('Missing parameters in getTherapistAvailability');
-            echo json_encode(['error' => 'Missing required parameters']);
-            return;
-        }
-
-        $therapistId = $_GET['therapist_id'];
-        $weekStart = $_GET['week_start'];
-        
         try {
+            if (!isset($_GET['therapist_id']) || !isset($_GET['week_start'])) {
+                throw new Exception('Missing required parameters');
+            }
+
+            $therapistId = (int)$_GET['therapist_id'];
+            $weekStart = $_GET['week_start'];
+            
+            // Validate date format
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $weekStart)) {
+                throw new Exception('Invalid date format');
+            }
+            
             error_log("Fetching availability for therapist $therapistId from $weekStart");
             
-            // Get availability for the specified week
-            $availability = $this->availability->getTherapistWeeklyAvailability(
+            $availabilityData = $this->availability->getTherapistWeeklyAvailability(
                 $therapistId, 
                 $weekStart
             );
             
-            error_log('Availability data: ' . print_r($availability, true));
+            if (empty($availabilityData)) {
+                error_log("No availability data found");
+                $availabilityData = [];
+            }
+            
+            error_log('Availability data: ' . print_r($availabilityData, true));
             
             header('Content-Type: application/json');
             echo json_encode([
                 'success' => true,
-                'availability' => $availability
+                'availability' => $availabilityData
             ]);
+            
         } catch (Exception $e) {
             error_log('Error in getTherapistAvailability: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
             header('Content-Type: application/json');
             echo json_encode([
                 'error' => 'Failed to load availability',

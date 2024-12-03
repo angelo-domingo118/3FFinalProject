@@ -44,30 +44,43 @@ function completeBooking(id) {
 // Function to cancel booking
 function cancelBooking(id) {
     if (confirm('Are you sure you want to cancel this booking?')) {
-        updateBookingStatus(id, 'cancelled');
+        updateBookingStatus(id, 'canceled');
     }
 }
 
 // Function to update booking status
 async function updateBookingStatus(id, status) {
     try {
-        const response = await fetch(`${BASE_URL}/public/api/bookings/${id}/status`, {
+        console.log('Updating booking status:', { id, status }); // Debug log
+        
+        const response = await fetch(`/cit17-final-project/public/api/bookings/${id}/status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status: status })
         });
 
+        console.log('Response status:', response.status); // Debug log
+
         if (!response.ok) {
-            throw new Error('Failed to update booking status');
+            const errorData = await response.json();
+            console.error('Error data:', errorData); // Debug log
+            throw new Error(errorData.message || 'Failed to update booking status');
         }
 
+        const result = await response.json();
+        console.log('Success:', result); // Debug log
+
+        // Show success message
+        alert('Booking status updated successfully!');
+        
         // Reload the page to show updated status
         window.location.reload();
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to update booking status. Please try again.');
+        alert('Failed to update booking status: ' + error.message);
     }
 }
 

@@ -166,7 +166,5 @@
 }
 </style>
 
-<script>
-    const BASE_URL = '<?php echo rtrim(BASE_URL, '/'); ?>';
-</script>
+<!-- Add your custom scripts -->
 <script src="<?php echo BASE_URL; ?>/assets/js/admin/therapist-schedule.js"></script>

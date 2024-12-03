@@ -74,7 +74,7 @@ extract($data);
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm cursor-pointer" onclick="filterByStatus('cancelled')">
+            <div class="card border-0 shadow-sm cursor-pointer" onclick="filterByStatus('canceled')">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
@@ -83,8 +83,8 @@ extract($data);
                             </div>
                         </div>
                         <div class="ms-3">
-                            <h6 class="text-muted mb-1">Cancelled</h6>
-                            <h3 class="mb-0"><?php echo $cancelled_count; ?></h3>
+                            <h6 class="text-muted mb-1">Canceled</h6>
+                            <h3 class="mb-0"><?php echo $canceled_count; ?></h3>
                         </div>
                     </div>
                 </div>
@@ -181,7 +181,7 @@ extract($data);
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="canceled">Canceled</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -218,3 +218,5 @@ extract($data);
     transition: transform 0.2s;
 }
 </style>
+
+<script src="/cit17-final-project/public/assets/js/admin/services.js"></script>

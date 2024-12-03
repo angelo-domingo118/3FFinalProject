@@ -155,18 +155,7 @@ class Appointment {
 
     public function getAllBookings($filters = []) {
         try {
-            // First, let's check if there are any appointments at all
-            $checkSql = "SELECT COUNT(*) as count FROM Appointments WHERE is_deleted = FALSE";
-            $checkStmt = $this->db->prepare($checkSql);
-            $checkStmt->execute();
-            $count = $checkStmt->fetch(PDO::FETCH_ASSOC)['count'];
-            error_log("Total appointments in database: " . $count);
-
-            // Basic query without joins first to verify data
-            if ($count == 0) {
-                error_log("No appointments found in database");
-                return [];
-            }
+            error_log("getAllBookings called with filters: " . print_r($filters, true));
 
             $sql = "SELECT 
                     a.*,
@@ -184,18 +173,21 @@ class Appointment {
             
             $params = [];
             
-            // Add filters
+            // Add filters with debug logging
             if (!empty($filters['status'])) {
+                error_log("Applying status filter: " . $filters['status']);
                 $sql .= " AND a.status = ?";
                 $params[] = $filters['status'];
             }
             
             if (!empty($filters['date'])) {
+                error_log("Applying date filter: " . $filters['date']);
                 $sql .= " AND DATE(a.appointment_date) = ?";
                 $params[] = $filters['date'];
             }
             
             if (!empty($filters['therapist'])) {
+                error_log("Applying therapist filter: " . $filters['therapist']);
                 $sql .= " AND a.therapist_id = ?";
                 $params[] = $filters['therapist'];
             }
@@ -203,28 +195,24 @@ class Appointment {
             // Order by most recent first
             $sql .= " ORDER BY a.created_at DESC";
             
-            if (!empty($filters['limit'])) {
-                $sql .= " LIMIT ?";
-                $params[] = (int)$filters['limit'];
-            }
-            
-            error_log("Executing getAllBookings query: " . $sql);
-            error_log("With parameters: " . print_r($params, true));
+            error_log("Final SQL Query: " . $sql);
+            error_log("Query Parameters: " . print_r($params, true));
             
             $stmt = $this->db->prepare($sql);
             if (!$stmt) {
-                error_log("Failed to prepare getAllBookings query: " . print_r($this->db->errorInfo(), true));
+                error_log("Failed to prepare query: " . print_r($this->db->errorInfo(), true));
                 return [];
             }
             
             $success = $stmt->execute($params);
             if (!$success) {
-                error_log("Failed to execute getAllBookings query: " . print_r($stmt->errorInfo(), true));
+                error_log("Failed to execute query: " . print_r($stmt->errorInfo(), true));
                 return [];
             }
             
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("Found " . count($results) . " bookings");
+            error_log("Query returned " . count($results) . " results");
+            error_log("First result: " . print_r(!empty($results) ? $results[0] : 'No results', true));
             
             return $results;
             

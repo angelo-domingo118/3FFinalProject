@@ -1,33 +1,56 @@
-// Search functionality
-document.getElementById('serviceSearch').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
+// Function to save a new service
+async function saveService() {
+    console.log('saveService called');
+    const form = document.getElementById('addServiceForm');
+    const formData = new FormData(form);
     
-    rows.forEach(row => {
-        const serviceName = row.querySelector('h6').textContent.toLowerCase();
-        const serviceDesc = row.querySelector('small').textContent.toLowerCase();
-        const shouldShow = serviceName.includes(searchTerm) || serviceDesc.includes(searchTerm);
-        row.style.display = shouldShow ? '' : 'none';
-    });
-});
+    const data = {
+        service_name: formData.get('service_name'),
+        description: formData.get('description'),
+        duration: parseInt(formData.get('duration')),
+        price: parseFloat(formData.get('price')),
+        service_type: formData.get('service_type'),
+        is_popular: formData.get('is_popular') === 'on'
+    };
 
-// Filter by service type
-document.getElementById('serviceTypeFilter').addEventListener('change', function(e) {
-    const filterType = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const serviceType = row.querySelector('.badge').textContent.toLowerCase();
-        row.style.display = !filterType || serviceType === filterType ? '' : 'none';
-    });
-});
+    console.log('Service data:', data);
 
-// Edit service
-function editService(serviceId) {
-    // Fetch service details
-    fetch(`${BASE_URL}/public/api/services/${serviceId}`)
-        .then(response => response.json())
-        .then(service => {
+    try {
+        const response = await fetch('/cit17-final-project/public/api/services', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        });
+
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Response data:', result);
+
+        if (response.ok) {
+            alert('Service created successfully!');
+            window.location.reload();
+        } else {
+            alert(result.error || 'Failed to create service');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to create service. Please try again.');
+    }
+}
+
+// Function to edit a service
+async function editService(serviceId) {
+    console.log('editService called with ID:', serviceId);
+    try {
+        const response = await fetch(`/cit17-final-project/public/api/services/${serviceId}`);
+        console.log('Response status:', response.status);
+        const service = await response.json();
+        console.log('Service data:', service);
+
+        if (response.ok) {
             const form = document.getElementById('editServiceForm');
             form.querySelector('[name="service_id"]').value = service.service_id;
             form.querySelector('[name="service_name"]').value = service.service_name;
@@ -36,82 +59,139 @@ function editService(serviceId) {
             form.querySelector('[name="price"]').value = service.price;
             form.querySelector('[name="service_type"]').value = service.service_type;
             form.querySelector('[name="is_popular"]').checked = service.is_popular;
-            
-            // Show modal
+
+            // Show the edit modal
             new bootstrap.Modal(document.getElementById('editServiceModal')).show();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to load service details');
-        });
-}
-
-// Save new service
-function saveService() {
-    const form = document.getElementById('addServiceForm');
-    const formData = new FormData(form);
-    
-    fetch(`${BASE_URL}/public/api/services`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            location.reload();
         } else {
-            alert(result.message || 'Failed to add service');
+            alert(service.error || 'Failed to load service details');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
-        alert('Failed to add service');
-    });
+        alert('Failed to load service details. Please try again.');
+    }
 }
 
-// Update existing service
-function updateService() {
+// Function to update a service
+async function updateService() {
+    console.log('updateService called');
     const form = document.getElementById('editServiceForm');
     const formData = new FormData(form);
     const serviceId = formData.get('service_id');
-    
-    fetch(`${BASE_URL}/public/api/services/${serviceId}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            location.reload();
+
+    const data = {
+        service_name: formData.get('service_name'),
+        description: formData.get('description'),
+        duration: parseInt(formData.get('duration')),
+        price: parseFloat(formData.get('price')),
+        service_type: formData.get('service_type'),
+        is_popular: formData.get('is_popular') === 'on'
+    };
+
+    console.log('Update data:', data);
+
+    try {
+        const response = await fetch(`/cit17-final-project/public/api/services/${serviceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        });
+
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Response data:', result);
+
+        if (response.ok) {
+            alert('Service updated successfully!');
+            window.location.reload();
         } else {
-            alert(result.message || 'Failed to update service');
+            alert(result.error || 'Failed to update service');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
-        alert('Failed to update service');
-    });
+        alert('Failed to update service. Please try again.');
+    }
 }
 
-// Delete service
-function deleteService(serviceId) {
+// Function to delete a service
+async function deleteService(serviceId) {
+    console.log('deleteService called with ID:', serviceId);
     if (!confirm('Are you sure you want to delete this service?')) {
         return;
     }
-    
-    fetch(`${BASE_URL}/public/api/services/${serviceId}`, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            location.reload();
+
+    try {
+        const response = await fetch(`/cit17-final-project/public/api/services/${serviceId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        console.log('Response status:', response.status);
+        const result = await response.json();
+        console.log('Response data:', result);
+
+        if (response.ok) {
+            alert('Service deleted successfully!');
+            window.location.reload();
         } else {
-            alert(result.message || 'Failed to delete service');
+            alert(result.error || 'Failed to delete service');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
-        alert('Failed to delete service');
+        alert('Failed to delete service. Please try again.');
+    }
+}
+
+// Function to filter services
+function filterServices() {
+    console.log('filterServices called');
+    const searchInput = document.getElementById('serviceSearch').value.toLowerCase().trim();
+    const typeFilter = document.getElementById('serviceTypeFilter').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('tbody tr');
+
+    console.log('Search term:', searchInput);
+    console.log('Type filter:', typeFilter);
+
+    rows.forEach(row => {
+        const serviceName = row.querySelector('h6').textContent.toLowerCase().trim();
+        const serviceType = row.querySelector('.badge').textContent.toLowerCase().trim();
+        
+        console.log('Row service type:', serviceType, 'Selected filter:', typeFilter);
+        
+        const matchesSearch = !searchInput || serviceName.includes(searchInput);
+        const matchesType = !typeFilter || serviceType === typeFilter;
+
+        console.log(`Service: ${serviceName} - Type: ${serviceType}`);
+        console.log('Matches - Search:', matchesSearch, 'Type:', matchesType);
+        
+        row.style.display = (matchesSearch && matchesType) ? '' : 'none';
     });
 }
+
+// Add event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners');
+    
+    // Add listeners for search and filter
+    const searchInput = document.getElementById('serviceSearch');
+    const typeFilter = document.getElementById('serviceTypeFilter');
+    
+    if (searchInput) {
+        console.log('Search input found');
+        searchInput.addEventListener('input', filterServices);
+    }
+    
+    if (typeFilter) {
+        console.log('Type filter found');
+        typeFilter.addEventListener('change', filterServices);
+    }
+
+    // Log initial values
+    if (typeFilter) {
+        console.log('Available filter options:', Array.from(typeFilter.options).map(opt => opt.value));
+    }
+});

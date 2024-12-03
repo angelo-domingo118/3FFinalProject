@@ -137,16 +137,57 @@ switch ($url[0]) {
         }
         break;
     case 'api':
-        if (isset($url[1]) && $url[1] === 'appointments') {
-            require_once '../app/controllers/api/AppointmentApiController.php';
-            $controller = new AppointmentApiController($pdo);
-            
-            if (isset($url[2])) {
-                $method = $url[2];
-                if (method_exists($controller, $method)) {
-                    $controller->$method();
-                    exit;
+        if (isset($url[1])) {
+            if ($url[1] === 'appointments') {
+                require_once '../app/controllers/api/AppointmentApiController.php';
+                $controller = new AppointmentApiController($pdo);
+                
+                if (isset($url[2])) {
+                    $method = $url[2];
+                    if (method_exists($controller, $method)) {
+                        $controller->$method();
+                        exit;
+                    }
                 }
+            } else if ($url[1] === 'bookings' && isset($url[2]) && isset($url[3]) && $url[3] === 'status') {
+                require_once '../app/controllers/api/AppointmentApiController.php';
+                $controller = new AppointmentApiController($pdo);
+                $controller->updateStatus();
+                exit;
+            } else if ($url[1] === 'services') {
+                require_once '../app/controllers/api/ServiceApiController.php';
+                $controller = new ServiceApiController($pdo);
+                
+                // Handle service endpoints
+                if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($url[2])) {
+                    $controller->create();
+                } else if (isset($url[2])) {
+                    $serviceId = $url[2];
+                    switch ($_SERVER['REQUEST_METHOD']) {
+                        case 'GET':
+                            $controller->get($serviceId);
+                            break;
+                        case 'PUT':
+                            $controller->update($serviceId);
+                            break;
+                        case 'DELETE':
+                            $controller->delete($serviceId);
+                            break;
+                    }
+                }
+                exit;
+            } else if ($url[1] === 'therapists') {
+                require_once '../app/controllers/api/TherapistApiController.php';
+                $controller = new TherapistApiController($pdo);
+                
+                if (isset($url[2]) && isset($url[3]) && $url[3] === 'availability') {
+                    // Get therapist availability
+                    $controller->getAvailability($url[2]);
+                } else if ($url[2] === 'availability') {
+                    // Save therapist availability
+                    $controller->saveAvailability();
+                }
+                exit;
             }
             http_response_code(404);
             echo json_encode(['error' => 'API endpoint not found']);

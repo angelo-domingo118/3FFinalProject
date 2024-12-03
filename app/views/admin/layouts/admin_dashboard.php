@@ -83,6 +83,10 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Define BASE_URL globally for JavaScript
+        const BASE_URL = "<?php echo BASE_URL; ?>";
+    </script>
     <script src="<?php echo BASE_URL; ?>/public/assets/js/admin.js"></script>
     <?php if ($active_page === 'bookings'): ?>
     <script src="<?php echo BASE_URL; ?>/public/assets/js/admin/bookings.js"></script>

@@ -8,82 +8,108 @@ class PaymentsController {
     }
 
     public function index() {
-        // Get all payments with related information
-        $query = "SELECT 
-                    p.id,
-                    p.transaction_id,
-                    p.booking_id,
-                    p.amount,
-                    p.status,
-                    p.payment_date,
-                    CONCAT(c.first_name, ' ', c.last_name) as customer_name,
-                    s.name as service_name
-                FROM payments p
-                JOIN bookings b ON p.booking_id = b.id
-                JOIN customers c ON b.customer_id = c.id
-                JOIN services s ON b.service_id = s.id
-                ORDER BY p.payment_date DESC";
-        
-        $payments = $this->db->query($query)->fetchAll();
-        
-        // Load the view with the payments data
-        require_once '../app/views/admin/payments.php';
+        try {
+            $conn = $this->db->connect();
+            
+            // Debug: Log the connection status
+            error_log("Database connection established");
+            
+            // Simple query to test data existence
+            $testQuery = "SELECT COUNT(*) as count FROM payments";
+            $testStmt = $conn->query($testQuery);
+            $count = $testStmt->fetch(PDO::FETCH_ASSOC)['count'];
+            error_log("Number of payments found: " . $count);
+
+            // Main query to fetch payments - modified to match exact database structure
+            $query = "SELECT 
+                        payment_id,
+                        appointment_id,
+                        amount,
+                        payment_method,
+                        payment_status,
+                        transaction_id,
+                        payment_date,
+                        is_deleted,
+                        promo_id,
+                        original_amount,
+                        discount_amount,
+                        final_amount
+                    FROM payments
+                    WHERE is_deleted = 0
+                    ORDER BY payment_date DESC";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->execute();
+            $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Debug: Log the number of payments fetched
+            error_log("Fetched payments count: " . count($payments));
+            
+            // Load the view with the payments data
+            require_once '../app/views/admin/payments.php';
+            
+        } catch (PDOException $e) {
+            error_log("Error in PaymentsController::index: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            require_once '../app/views/errors/500.php';
+        }
     }
 
     public function updateStatus() {
-        // Check if request is POST and has required data
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
             return;
         }
 
-        // Get POST data
-        $data = json_decode(file_get_contents('php://input'), true);
-        $payment_id = $data['payment_id'] ?? null;
-        $status = $data['status'] ?? null;
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $payment_id = $data['payment_id'] ?? null;
+            $status = $data['status'] ?? null;
 
-        if (!$payment_id || !$status) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Missing required fields']);
-            return;
-        }
+            if (!$payment_id || !$status) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Missing required fields']);
+                return;
+            }
 
-        // Update payment status
-        $query = "UPDATE payments SET status = ?, updated_at = NOW() WHERE id = ?";
-        $result = $this->db->query($query, [$status, $payment_id]);
+            $conn = $this->db->connect();
+            $query = "UPDATE payments SET payment_status = ? WHERE payment_id = ? AND is_deleted = 0";
+            $stmt = $conn->prepare($query);
+            $result = $stmt->execute([$status, $payment_id]);
 
-        if ($result) {
-            echo json_encode(['success' => true]);
-        } else {
+            if ($result) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Failed to update payment status']);
+            }
+        } catch (PDOException $e) {
+            error_log("Error in PaymentsController::updateStatus: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to update payment status']);
+            echo json_encode(['error' => 'Database error occurred']);
         }
     }
 
     public function getDetails($id) {
-        // Get detailed payment information
-        $query = "SELECT 
-                    p.*,
-                    b.booking_date,
-                    b.status as booking_status,
-                    CONCAT(c.first_name, ' ', c.last_name) as customer_name,
-                    c.email as customer_email,
-                    s.name as service_name,
-                    s.price as service_price
-                FROM payments p
-                JOIN bookings b ON p.booking_id = b.id
-                JOIN customers c ON b.customer_id = c.id
-                JOIN services s ON b.service_id = s.id
-                WHERE p.id = ?";
-        
-        $payment = $this->db->query($query, [$id])->fetch();
-        
-        if ($payment) {
-            echo json_encode($payment);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Payment not found']);
+        try {
+            $conn = $this->db->connect();
+            $query = "SELECT * FROM payments WHERE payment_id = ? AND is_deleted = 0";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$id]);
+            $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($payment) {
+                echo json_encode($payment);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Payment not found']);
+            }
+        } catch (PDOException $e) {
+            error_log("Error in PaymentsController::getDetails: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error occurred']);
         }
     }
 }

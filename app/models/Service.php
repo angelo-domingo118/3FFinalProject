@@ -118,5 +118,76 @@ class Service {
         }
     }
 
+    public function createService($data) {
+        try {
+            $sql = "INSERT INTO Services (
+                service_name, description, duration, price, 
+                service_type, is_popular, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+            
+            $stmt = $this->db->prepare($sql);
+            $success = $stmt->execute([
+                $data['service_name'],
+                $data['description'],
+                $data['duration'],
+                $data['price'],
+                $data['service_type'],
+                isset($data['is_popular']) ? 1 : 0
+            ]);
+            
+            if ($success) {
+                return $this->db->lastInsertId();
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("Error creating service: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function updateService($serviceId, $data) {
+        try {
+            $sql = "UPDATE Services SET 
+                    service_name = ?,
+                    description = ?,
+                    duration = ?,
+                    price = ?,
+                    service_type = ?,
+                    is_popular = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                    WHERE service_id = ? AND is_deleted = FALSE";
+            
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([
+                $data['service_name'],
+                $data['description'],
+                $data['duration'],
+                $data['price'],
+                $data['service_type'],
+                isset($data['is_popular']) ? 1 : 0,
+                $serviceId
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error updating service: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function deleteService($serviceId) {
+        try {
+            // Soft delete
+            $sql = "UPDATE Services SET 
+                    is_deleted = TRUE,
+                    updated_at = CURRENT_TIMESTAMP
+                    WHERE service_id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$serviceId]);
+        } catch (PDOException $e) {
+            error_log("Error deleting service: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // Add more methods as needed
 } 

@@ -242,4 +242,62 @@ class AppointmentApiController {
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    public function updateStatus() {
+        header('Content-Type: application/json');
+        
+        // Check if user is admin
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id']) || $_SESSION['role_id'] !== 3) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized. Admin access required.']);
+            return;
+        }
+
+        // Get JSON input
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        // Get appointment ID from URL parameters
+        $urlParts = explode('/', $_SERVER['REQUEST_URI']);
+        $appointmentId = intval($urlParts[array_search('bookings', $urlParts) + 1]);
+
+        if (!$appointmentId || !isset($data['status'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Appointment ID and status are required']);
+            return;
+        }
+
+        // Validate status
+        $allowedStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+        if (!in_array($data['status'], $allowedStatuses)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid status']);
+            return;
+        }
+
+        try {
+            // Update appointment status
+            $sql = "UPDATE Appointments 
+                   SET status = ?, 
+                       updated_at = CURRENT_TIMESTAMP 
+                   WHERE appointment_id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            if ($stmt->execute([$data['status'], $appointmentId])) {
+                if ($stmt->rowCount() > 0) {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Appointment status updated successfully'
+                    ]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Appointment not found']);
+                }
+            } else {
+                throw new Exception('Database error while updating status');
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
 }

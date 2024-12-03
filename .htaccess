@@ -1,9 +1,12 @@
 RewriteEngine On
-RewriteBase /cit17-final-project/
+RewriteBase /cit17-final-project/public/
 
 # If the request is not for a file or directory
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
 # Rewrite all requests to index.php
-RewriteRule ^(.*)$ index.php?url=$1 [QSA,L] 
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Rewrite for admin/get-therapist-availability
+RewriteRule ^admin/get-therapist-availability$ index.php?controller=admin&action=getTherapistAvailability [QSA,L] 
