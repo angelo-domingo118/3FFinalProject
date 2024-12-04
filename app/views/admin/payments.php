@@ -59,32 +59,32 @@ echo "<!-- Debug: Number of payments: " . (isset($payments) ? count($payments) :
                                     <td><?= date('M d, Y H:i', strtotime($payment['payment_date'])) ?></td>
                                     <td>
                                         <div class="d-flex gap-2">
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-outline-info view-details" 
-                                                    data-payment-id="<?= $payment['payment_id'] ?>"
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top"
-                                                    title="View Payment Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
                                             <?php if ($payment['payment_status'] === 'unpaid'): ?>
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-success mark-as-paid"
+                                                        class="btn btn-sm btn-success mark-as-paid"
                                                         data-payment-id="<?= $payment['payment_id'] ?>"
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="top"
                                                         title="Mark as Paid">
-                                                    <i class="bi bi-check2-circle"></i>
+                                                    <i class="bi bi-check2-circle"></i> Mark as Paid
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-warning mark-as-refunded"
+                                                        data-payment-id="<?= $payment['payment_id'] ?>"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="Mark as Refunded">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Mark as Refunded
                                                 </button>
                                             <?php endif; ?>
                                             <?php if ($payment['payment_status'] === 'paid'): ?>
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-danger refund-payment"
+                                                        class="btn btn-sm btn-danger refund-payment"
                                                         data-payment-id="<?= $payment['payment_id'] ?>"
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="top"
                                                         title="Refund Payment">
-                                                    <i class="bi bi-arrow-return-left"></i>
+                                                    <i class="bi bi-arrow-return-left"></i> Refund
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -113,62 +113,41 @@ echo "<!-- Debug: Number of payments: " . (isset($payments) ? count($payments) :
     </div>
 </div>
 
-<!-- Payment Details Modal -->
-<div class="modal fade" id="paymentDetailsModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Payment Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Payment details will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
     /* Custom styles for action buttons */
-    .btn-outline-info:hover i,
-    .btn-outline-success:hover i,
-    .btn-outline-danger:hover i {
-        transform: scale(1.1);
-        transition: transform 0.2s ease;
+    .btn i {
+        margin-right: 5px;
     }
 
-    .btn-outline-info:focus,
-    .btn-outline-success:focus,
-    .btn-outline-danger:focus {
-        box-shadow: none;
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
     }
 
-    .btn-outline-info i,
-    .btn-outline-success i,
-    .btn-outline-danger i {
-        font-size: 1rem;
+    .mark-as-paid:hover {
+        background-color: #198754;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .mark-as-refunded:hover {
+        background-color: #ffc107;
+        color: black;
+        transform: translateY(-1px);
+    }
+
+    .refund-payment:hover {
+        background-color: #dc3545;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn {
+        transition: all 0.2s ease-in-out;
     }
 
     .d-flex.gap-2 {
-        align-items: center;
-    }
-
-    /* Hover animations */
-    .btn-outline-info:hover {
-        background-color: rgba(13, 202, 240, 0.1);
-    }
-
-    .btn-outline-success:hover {
-        background-color: rgba(25, 135, 84, 0.1);
-    }
-
-    .btn-outline-danger:hover {
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-
-    /* Add subtle transition for all button states */
-    .btn {
-        transition: all 0.2s ease-in-out;
+        gap: 0.5rem !important;
     }
 </style>
 
@@ -200,107 +179,107 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // View Details button
-    document.querySelectorAll('.view-details').forEach(button => {
-        button.addEventListener('click', function() {
-            const paymentId = this.dataset.paymentId;
-            // Fetch and show payment details in modal
-            fetch(`/admin/payments/details/${paymentId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const modal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
-                    document.querySelector('#paymentDetailsModal .modal-body').innerHTML = `
-                        <dl class="row">
-                            <dt class="col-sm-4">Transaction ID</dt>
-                            <dd class="col-sm-8">${data.transaction_id}</dd>
-                            
-                            <dt class="col-sm-4">Appointment ID</dt>
-                            <dd class="col-sm-8">${data.appointment_id}</dd>
-                            
-                            <dt class="col-sm-4">Amount</dt>
-                            <dd class="col-sm-8">₱${parseFloat(data.amount).toFixed(2)}</dd>
-                            
-                            <dt class="col-sm-4">Original Amount</dt>
-                            <dd class="col-sm-8">₱${parseFloat(data.original_amount).toFixed(2)}</dd>
-                            
-                            <dt class="col-sm-4">Discount</dt>
-                            <dd class="col-sm-8">₱${parseFloat(data.discount_amount).toFixed(2)}</dd>
-                            
-                            <dt class="col-sm-4">Final Amount</dt>
-                            <dd class="col-sm-8">₱${parseFloat(data.final_amount).toFixed(2)}</dd>
-                            
-                            <dt class="col-sm-4">Payment Method</dt>
-                            <dd class="col-sm-8">${data.payment_method.toUpperCase()}</dd>
-                            
-                            <dt class="col-sm-4">Status</dt>
-                            <dd class="col-sm-8">${data.payment_status.toUpperCase()}</dd>
-                            
-                            <dt class="col-sm-4">Payment Date</dt>
-                            <dd class="col-sm-8">${new Date(data.payment_date).toLocaleString()}</dd>
-                        </dl>
-                    `;
-                    modal.show();
-                })
-                .catch(error => console.error('Error:', error));
-        });
-    });
-
-    // Mark as Paid button
+    // Mark as Paid functionality
     document.querySelectorAll('.mark-as-paid').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const paymentId = this.dataset.paymentId;
+            console.log('Payment ID:', paymentId); // Debug log
+            
             if (confirm('Are you sure you want to mark this payment as paid?')) {
-                fetch('/admin/payments/update-status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        payment_id: paymentId,
-                        status: 'paid'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                try {
+                    console.log('Sending request to update payment status...'); // Debug log
+                    const response = await fetch('/cit17-final-project/public/admin/payments/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            status: 'paid'
+                        })
+                    });
+
+                    console.log('Response status:', response.status); // Debug log
+                    console.log('Response headers:', Object.fromEntries(response.headers)); // Debug log
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Success response:', result); // Debug log
                         window.location.reload();
                     } else {
-                        alert('Failed to update payment status');
+                        const data = await response.json();
+                        console.error('Error response:', data); // Debug log
+                        alert('Error: ' + (data.error || 'Failed to update payment status'));
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                } catch (error) {
+                    console.error('Fetch error:', error); // Debug log
+                    alert('Error: Failed to communicate with the server');
+                }
             }
         });
     });
 
-    // Refund Payment button
-    document.querySelectorAll('.refund-payment').forEach(button => {
-        button.addEventListener('click', function() {
+    // Mark as Refunded functionality
+    document.querySelectorAll('.mark-as-refunded').forEach(button => {
+        button.addEventListener('click', async function() {
             const paymentId = this.dataset.paymentId;
-            if (confirm('Are you sure you want to refund this payment?')) {
-                fetch('/admin/payments/update-status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        payment_id: paymentId,
-                        status: 'refunded'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+            if (confirm('Are you sure you want to mark this payment as refunded? This action cannot be undone.')) {
+                try {
+                    const response = await fetch('/cit17-final-project/public/admin/payments/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            status: 'refunded'
+                        })
+                    });
+
+                    if (response.ok) {
                         window.location.reload();
                     } else {
-                        alert('Failed to update payment status');
+                        const data = await response.json();
+                        alert('Error: ' + (data.error || 'Failed to mark as refunded'));
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                } catch (error) {
+                    alert('Error: Failed to communicate with the server');
+                }
             }
         });
     });
-});</script>
+
+    // Refund Payment functionality
+    document.querySelectorAll('.refund-payment').forEach(button => {
+        button.addEventListener('click', async function() {
+            const paymentId = this.dataset.paymentId;
+            if (confirm('Are you sure you want to refund this payment? This action cannot be undone.')) {
+                try {
+                    const response = await fetch('/cit17-final-project/public/admin/payments/update-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: paymentId,
+                            status: 'refunded'
+                        })
+                    });
+
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        const data = await response.json();
+                        alert('Error: ' + (data.error || 'Failed to process refund'));
+                    }
+                } catch (error) {
+                    alert('Error: Failed to communicate with the server');
+                }
+            }
+        });
+    });
+});
+</script>
 
 <?php
 echo "<!-- Debug: End of view file -->\n";

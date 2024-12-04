@@ -198,3 +198,38 @@ switch ($url[0]) {
         echo "404 Not Found";
         break;
 } 
+
+// API Routes
+if (strpos($_SERVER['REQUEST_URI'], '/cit17-final-project/public/api/') === 0) {
+    $url = explode('/', trim(substr($_SERVER['REQUEST_URI'], strlen('/cit17-final-project/public/api/')), '/'));
+    
+    // Load the AppointmentController
+    require_once '../app/controllers/AppointmentController.php';
+    $appointmentController = new AppointmentController($pdo);
+
+    switch ($url[0]) {
+        case 'appointment-details':
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $appointmentController->getAppointmentDetails();
+            }
+            break;
+            
+        case 'available-timeslots':
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                $appointmentController->getAvailableTimeSlots();
+            }
+            break;
+            
+        case 'reschedule-appointment':
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $appointmentController->rescheduleAppointment();
+            }
+            break;
+            
+        default:
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'API endpoint not found']);
+            break;
+    }
+    exit;
+} 

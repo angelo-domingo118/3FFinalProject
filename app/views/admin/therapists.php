@@ -91,6 +91,7 @@
             </div>
             <div class="modal-body">
                 <form id="availabilityForm">
+                    <!-- Therapist Selection -->
                     <div class="mb-3">
                         <label class="form-label">Therapist</label>
                         <select class="form-select" name="therapist_id" required>
@@ -102,46 +103,71 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
+
+                    <!-- Date Selection -->
                     <div class="mb-3">
-                        <label class="form-label">Day of Week</label>
-                        <select class="form-select" name="day_of_week" required>
-                            <?php foreach ($days as $day): ?>
-                                <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date" required>
+                        <div class="form-text">Select a date within the next 3 months</div>
                     </div>
+
+                    <!-- Time Selection -->
                     <div class="row mb-3">
                         <div class="col">
                             <label class="form-label">Start Time</label>
                             <select class="form-select" name="start_time" required>
-                                <?php foreach ($timeSlots as $time): ?>
-                                    <option value="<?php echo $time; ?>"><?php echo $time; ?></option>
-                                <?php endforeach; ?>
+                                <option value="">Select Time</option>
+                                <?php 
+                                for ($hour = 9; $hour <= 17; $hour++) {
+                                    $time = sprintf('%02d:00', $hour);
+                                    echo "<option value='$time'>$time</option>";
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="col">
                             <label class="form-label">End Time</label>
                             <select class="form-select" name="end_time" required>
-                                <?php foreach ($timeSlots as $time): ?>
-                                    <option value="<?php echo $time; ?>"><?php echo $time; ?></option>
-                                <?php endforeach; ?>
+                                <option value="">Select Time</option>
+                                <?php 
+                                for ($hour = 10; $hour <= 18; $hour++) {
+                                    $time = sprintf('%02d:00', $hour);
+                                    echo "<option value='$time'>$time</option>";
+                                }
+                                ?>
                             </select>
                         </div>
                     </div>
+
+                    <!-- Repeat Weekly Option -->
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" name="repeat_weekly" id="repeatWeekly">
-                        <label class="form-check-label" for="repeatWeekly">Repeat Weekly</label>
+                        <label class="form-check-label" for="repeatWeekly">
+                            Repeat Weekly (for next 12 weeks)
+                        </label>
+                        <div class="form-text">This will create availability slots for the same day of the week for the next 12 weeks</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveAvailability()">Save Availability</button>
+                <button type="button" class="btn btn-primary" id="saveAvailabilityBtn">Save Availability</button>
             </div>
         </div>
     </div>
 </div>
 
+<script>
+// Define BASE_URL for JavaScript use
+const BASE_URL = '<?php echo rtrim(BASE_URL, '/'); ?>';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for save button
+    document.getElementById('saveAvailabilityBtn').addEventListener('click', saveAvailability);
+});
+</script>
+
+<!-- Add custom styles -->
 <style>
 .availability-slot {
     position: absolute;
@@ -163,6 +189,72 @@
 
 .availability-slot.booked {
     background-color: rgba(220, 53, 69, 0.2);
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Form styling */
+.form-select, .form-control {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5c636a;
+    border-color: #565e64;
 }
 </style>
 

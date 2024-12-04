@@ -298,4 +298,255 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('DOMContentLoaded', () => {
         debugCalendarStructure();
     });
+
+    // Add Availability Form Handling
+    function validateAvailabilityForm() {
+        console.log('Validating form...');
+        
+        const form = document.getElementById('availabilityForm');
+        const therapistId = form.querySelector('[name="therapist_id"]').value;
+        const date = form.querySelector('[name="date"]').value;
+        const startTime = form.querySelector('[name="start_time"]').value;
+        const endTime = form.querySelector('[name="end_time"]').value;
+
+        console.log('Form values:', {
+            therapistId,
+            date,
+            startTime,
+            endTime
+        });
+
+        if (!therapistId) {
+            alert('Please select a therapist');
+            return false;
+        }
+
+        if (!date) {
+            alert('Please select a date');
+            return false;
+        }
+
+        if (!startTime || !endTime) {
+            alert('Please select both start and end times');
+            return false;
+        }
+
+        const startHour = parseInt(startTime.split(':')[0]);
+        const endHour = parseInt(endTime.split(':')[0]);
+
+        if (endHour <= startHour) {
+            alert('End time must be after start time');
+            return false;
+        }
+
+        // Check if selected date is not in the past
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            alert('Cannot add availability for past dates');
+            return false;
+        }
+
+        console.log('Form validation passed');
+        return true;
+    }
+
+    // Make saveAvailability globally accessible
+    window.saveAvailability = function() {
+        console.log('Save Availability function called');
+        
+        if (!validateAvailabilityForm()) {
+            console.log('Form validation failed');
+            return;
+        }
+
+        const form = document.getElementById('availabilityForm');
+        const formData = new FormData(form);
+        
+        // Log form data
+        console.log('Form Data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        const repeatWeekly = form.querySelector('[name="repeat_weekly"]').checked;
+        console.log('Repeat Weekly:', repeatWeekly);
+
+        // If repeat weekly is checked, calculate future dates
+        if (repeatWeekly) {
+            const baseDate = new Date(formData.get('date'));
+            const dates = [];
+            
+            // Add availability for the next 12 weeks
+            for (let i = 0; i < 12; i++) {
+                const futureDate = new Date(baseDate);
+                futureDate.setDate(baseDate.getDate() + (i * 7));
+                dates.push(formatDate(futureDate));
+            }
+            formData.append('dates', JSON.stringify(dates));
+            console.log('Generated dates:', dates);
+        }
+
+        // Show loading state
+        const saveButton = document.getElementById('saveAvailabilityBtn');
+        const originalText = saveButton.textContent;
+        saveButton.textContent = 'Saving...';
+        saveButton.disabled = true;
+
+        console.log('Sending request to:', `${BASE_URL}/admin/save-therapist-availability`);
+
+        fetch(`${BASE_URL}/admin/save-therapist-availability`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Failed to parse response as JSON:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            });
+        })
+        .then(data => {
+            console.log('Server response:', data);
+            
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addAvailabilityModal'));
+                modal.hide();
+
+                // Reset form
+                form.reset();
+
+                // Refresh calendar
+                loadTherapistAvailability();
+
+                // Show success message
+                alert('Availability saved successfully');
+            } else {
+                throw new Error(data.error || 'Failed to save availability');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving availability:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
+            alert(`Error saving availability: ${error.message}`);
+        })
+        .finally(() => {
+            // Reset button state
+            saveButton.textContent = originalText;
+            saveButton.disabled = false;
+        });
+    };
+
+    // Also expose validateAvailabilityForm for use by saveAvailability
+    window.validateAvailabilityForm = function() {
+        console.log('Validating form...');
+        
+        const form = document.getElementById('availabilityForm');
+        const therapistId = form.querySelector('[name="therapist_id"]').value;
+        const date = form.querySelector('[name="date"]').value;
+        const startTime = form.querySelector('[name="start_time"]').value;
+        const endTime = form.querySelector('[name="end_time"]').value;
+
+        console.log('Form values:', {
+            therapistId,
+            date,
+            startTime,
+            endTime
+        });
+
+        if (!therapistId) {
+            alert('Please select a therapist');
+            return false;
+        }
+
+        if (!date) {
+            alert('Please select a date');
+            return false;
+        }
+
+        if (!startTime || !endTime) {
+            alert('Please select both start and end times');
+            return false;
+        }
+
+        const startHour = parseInt(startTime.split(':')[0]);
+        const endHour = parseInt(endTime.split(':')[0]);
+
+        if (endHour <= startHour) {
+            alert('End time must be after start time');
+            return false;
+        }
+
+        // Check if selected date is not in the past
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            alert('Cannot add availability for past dates');
+            return false;
+        }
+
+        console.log('Form validation passed');
+        return true;
+    };
+
+    // Add this at the top of your file to ensure BASE_URL is defined
+    if (typeof BASE_URL === 'undefined') {
+        console.error('BASE_URL is not defined. Make sure it is set in your PHP template.');
+    }
+
+    // Add form reset when modal is closed
+    document.getElementById('addAvailabilityModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('availabilityForm').reset();
+    });
+
+    // Add time validation on time select change
+    document.querySelectorAll('#availabilityForm select[name="start_time"], #availabilityForm select[name="end_time"]')
+    .forEach(select => {
+        select.addEventListener('change', function() {
+            const form = this.closest('form');
+            const startTime = form.querySelector('[name="start_time"]').value;
+            const endTime = form.querySelector('[name="end_time"]').value;
+
+            if (startTime && endTime) {
+                const startHour = parseInt(startTime.split(':')[0]);
+                const endHour = parseInt(endTime.split(':')[0]);
+
+                if (endHour <= startHour) {
+                    alert('End time must be after start time');
+                    this.value = ''; // Reset the changed select
+                }
+            }
+        });
+    });
+
+    // Initialize datepicker for the date input
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('#availabilityForm [name="date"]');
+        if (dateInput) {
+            // Set min date to today
+            const today = new Date();
+            dateInput.min = formatDate(today);
+            
+            // Set max date to 3 months from now
+            const maxDate = new Date();
+            maxDate.setMonth(maxDate.getMonth() + 3);
+            dateInput.max = formatDate(maxDate);
+        }
+    });
 }); 

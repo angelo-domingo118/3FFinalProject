@@ -4,13 +4,16 @@ class BookingController {
     private $pdo;
     private $serviceModel;
     private $userModel;
+    private $appointmentModel;
 
     public function __construct($pdo) {
         $this->pdo = $pdo;
         require_once '../app/models/Service.php';
         require_once '../app/models/User.php';
+        require_once '../app/models/Appointment.php';
         $this->serviceModel = new Service($pdo);
         $this->userModel = new User($pdo);
+        $this->appointmentModel = new Appointment($pdo);
     }
 
     public function index() {
@@ -38,62 +41,67 @@ class BookingController {
         header('Content-Type: application/json');
         
         try {
-            if (!isset($_GET['date']) || !isset($_GET['service_id'])) {
-                echo json_encode(['error' => 'Missing parameters']);
-                return;
+            if (!isset($_GET['date'])) {
+                throw new Exception('Date parameter is required');
             }
 
             $date = $_GET['date'];
-            $serviceId = (int)$_GET['service_id'];
+            $serviceId = null;
+            $appointmentId = null;
             
-            // Get service duration
-            $service = $this->serviceModel->getServiceById($serviceId);
+            // Check if this is for a new booking or rescheduling
+            if (isset($_GET['service_id'])) {
+                $serviceId = (int)$_GET['service_id'];
+                $service = $this->serviceModel->getServiceById($serviceId);
+            } elseif (isset($_GET['appointment_id'])) {
+                $appointmentId = (int)$_GET['appointment_id'];
+                // Get the appointment details to get the service
+                $appointment = $this->appointmentModel->getAppointmentById($appointmentId);
+                if (!$appointment) {
+                    throw new Exception('Appointment not found');
+                }
+                $service = $this->serviceModel->getServiceById($appointment['service_id']);
+            } else {
+                throw new Exception('Either service_id or appointment_id is required');
+            }
+            
             if (!$service) {
-                echo json_encode(['error' => 'Service not found']);
-                return;
+                throw new Exception('Service not found');
             }
 
-            // Query available slots showing full availability range
-            $sql = "SELECT 
-                    a.*, 
-                    u.full_name as therapist_name,
-                    TIME_FORMAT(a.start_time, '%h:%i %p') as formatted_start_time,
-                    TIME_FORMAT(a.end_time, '%h:%i %p') as formatted_end_time,
-                    :duration as service_duration
-                    FROM Availability a 
-                    JOIN Users u ON a.therapist_id = u.user_id 
-                    WHERE a.date = :date 
-                    AND a.is_deleted = FALSE 
-                    AND u.role_id = (SELECT role_id FROM Roles WHERE role_name = 'therapist')
-                    AND NOT EXISTS (
-                        SELECT 1 FROM Appointments apt 
-                        WHERE apt.therapist_id = a.therapist_id 
-                        AND apt.appointment_date = a.date 
-                        AND apt.status != 'canceled'
-                        AND apt.is_deleted = FALSE
-                        AND (
-                            (apt.start_time <= a.start_time AND apt.end_time > a.start_time)
-                            OR (apt.start_time < a.end_time AND apt.end_time >= a.end_time)
-                            OR (apt.start_time >= a.start_time AND apt.end_time <= a.end_time)
-                        )
-                    )
-                    ORDER BY a.start_time";
-                    
-            $stmt = $this->pdo->prepare($sql);
-            $params = [
-                ':date' => $date,
-                ':duration' => $service['duration']
-            ];
-            $stmt->execute($params);
-            $slots = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Get all available time slots for the date
+            $availableSlots = $this->getTimeSlots($date, $service['duration']);
             
-            echo json_encode(['slots' => $slots, 'service' => $service]);
+            echo json_encode([
+                'success' => true,
+                'timeslots' => $availableSlots
+            ]);
             
         } catch (Exception $e) {
-            error_log("Error in getAvailableSlots: " . $e->getMessage());
-            echo json_encode(['error' => 'Server error', 'message' => $e->getMessage()]);
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
-        exit;
+    }
+
+    private function getTimeSlots($date, $duration) {
+        // Business hours
+        $startTime = '09:00';
+        $endTime = '17:00';
+        
+        $slots = [];
+        $currentTime = strtotime($startTime);
+        $endTimeStamp = strtotime($endTime);
+        
+        while ($currentTime <= $endTimeStamp) {
+            $timeSlot = date('H:i', $currentTime);
+            $slots[] = $timeSlot;
+            $currentTime = strtotime('+' . $duration . ' minutes', $currentTime);
+        }
+        
+        return $slots;
     }
 
     public function confirm() {

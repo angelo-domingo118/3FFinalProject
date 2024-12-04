@@ -241,4 +241,17 @@ class Appointment {
         $result = $this->db->query($sql, $params);
         return $result[0]['count'] == 0;
     }
+
+    public function getAppointmentById($appointmentId) {
+        $sql = "SELECT a.*, s.service_name, s.duration, s.service_id,
+                u.full_name as therapist_name
+                FROM Appointments a
+                JOIN Services s ON a.service_id = s.service_id
+                LEFT JOIN Users u ON a.therapist_id = u.user_id
+                WHERE a.appointment_id = ? AND a.is_deleted = FALSE";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$appointmentId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 } 

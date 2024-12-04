@@ -56,36 +56,52 @@ class PaymentsController {
     }
 
     public function updateStatus() {
+        error_log("PaymentsController::updateStatus called");
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            error_log("Method not allowed: " . $_SERVER['REQUEST_METHOD']);
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
             return;
         }
 
         try {
-            $data = json_decode(file_get_contents('php://input'), true);
+            $input = file_get_contents('php://input');
+            error_log("Received input: " . $input);
+            
+            $data = json_decode($input, true);
             $payment_id = $data['payment_id'] ?? null;
             $status = $data['status'] ?? null;
+            
+            error_log("Parsed data - payment_id: " . $payment_id . ", status: " . $status);
 
             if (!$payment_id || !$status) {
+                error_log("Missing required fields - payment_id: " . ($payment_id ? 'yes' : 'no') . ", status: " . ($status ? 'yes' : 'no'));
                 http_response_code(400);
                 echo json_encode(['error' => 'Missing required fields']);
                 return;
             }
 
             $conn = $this->db->connect();
+            error_log("Database connected");
+            
             $query = "UPDATE payments SET payment_status = ? WHERE payment_id = ? AND is_deleted = 0";
             $stmt = $conn->prepare($query);
             $result = $stmt->execute([$status, $payment_id]);
+            
+            error_log("Query executed. Result: " . ($result ? 'success' : 'failed'));
+            error_log("Rows affected: " . $stmt->rowCount());
 
             if ($result) {
                 echo json_encode(['success' => true]);
             } else {
+                error_log("Failed to update payment status. Error info: " . print_r($stmt->errorInfo(), true));
                 http_response_code(500);
                 echo json_encode(['error' => 'Failed to update payment status']);
             }
         } catch (PDOException $e) {
             error_log("Error in PaymentsController::updateStatus: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
             echo json_encode(['error' => 'Database error occurred']);
         }

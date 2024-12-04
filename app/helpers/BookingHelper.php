@@ -51,6 +51,12 @@ function getActionButtons($booking) {
                 'action' => "confirmBooking({$booking['appointment_id']})"
             ];
             $buttons[] = [
+                'label' => 'Reschedule',
+                'icon' => 'calendar2-check',
+                'class' => 'primary',
+                'action' => "rescheduleAppointment({$booking['appointment_id']})"
+            ];
+            $buttons[] = [
                 'label' => 'Cancel',
                 'icon' => 'x-circle',
                 'class' => 'danger',
@@ -66,6 +72,12 @@ function getActionButtons($booking) {
                 'action' => "completeBooking({$booking['appointment_id']})"
             ];
             $buttons[] = [
+                'label' => 'Reschedule',
+                'icon' => 'calendar2-check',
+                'class' => 'primary',
+                'action' => "rescheduleAppointment({$booking['appointment_id']})"
+            ];
+            $buttons[] = [
                 'label' => 'Cancel',
                 'icon' => 'x-circle',
                 'class' => 'danger',
@@ -74,22 +86,9 @@ function getActionButtons($booking) {
             break;
             
         case 'completed':
-            $buttons[] = [
-                'label' => 'View Details',
-                'icon' => 'eye',
-                'class' => 'primary',
-                'action' => "viewBooking({$booking['appointment_id']})"
-            ];
-            break;
-            
         case 'cancelled':
         case 'canceled':
-            $buttons[] = [
-                'label' => 'View Details',
-                'icon' => 'eye',
-                'class' => 'primary',
-                'action' => "viewBooking({$booking['appointment_id']})"
-            ];
+            // No buttons for completed or canceled appointments
             break;
     }
     

@@ -103,3 +103,92 @@ document.addEventListener('DOMContentLoaded', function() {
         form.querySelector('[name="therapist"]').value = urlParams.get('therapist') || '';
     }
 });
+
+// Function to handle appointment rescheduling
+function rescheduleAppointment(appointmentId) {
+    console.log('Opening reschedule modal for appointment:', appointmentId);
+    const modal = new bootstrap.Modal(document.getElementById(`rescheduleModal${appointmentId}`));
+    modal.show();
+    
+    // Add event listener for date change
+    const dateInput = document.getElementById(`new-date-${appointmentId}`);
+    dateInput.addEventListener('change', () => loadAvailableTimeSlots(appointmentId, dateInput.value));
+}
+
+// Function to load available time slots
+async function loadAvailableTimeSlots(appointmentId, date) {
+    try {
+        console.log('Loading time slots for:', { appointmentId, date });
+        
+        const response = await fetch(`/cit17-final-project/public/api/appointments/timeslots`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                appointment_id: appointmentId,
+                date: date 
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load time slots');
+        }
+
+        const timeSlots = await response.json();
+        const timeSelect = document.getElementById(`new-time-${appointmentId}`);
+        
+        // Clear existing options
+        timeSelect.innerHTML = '<option value="">Select time</option>';
+        
+        // Add new time slots
+        timeSlots.forEach(slot => {
+            const option = document.createElement('option');
+            option.value = slot.time;
+            option.textContent = slot.formatted_time;
+            timeSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading time slots:', error);
+        alert('Failed to load available time slots');
+    }
+}
+
+// Function to submit reschedule
+async function submitReschedule(appointmentId) {
+    const newDate = document.getElementById(`new-date-${appointmentId}`).value;
+    const newTime = document.getElementById(`new-time-${appointmentId}`).value;
+    
+    if (!newDate || !newTime) {
+        alert('Please select both date and time');
+        return;
+    }
+
+    try {
+        console.log('Submitting reschedule:', { appointmentId, newDate, newTime });
+        
+        const response = await fetch(`/cit17-final-project/public/api/appointments/${appointmentId}/reschedule`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ 
+                date: newDate,
+                time: newTime 
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to reschedule appointment');
+        }
+
+        const result = await response.json();
+        alert('Appointment rescheduled successfully!');
+        window.location.reload();
+    } catch (error) {
+        console.error('Error rescheduling appointment:', error);
+        alert('Failed to reschedule appointment');
+    }
+}

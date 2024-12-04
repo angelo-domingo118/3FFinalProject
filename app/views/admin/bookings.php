@@ -209,6 +209,76 @@ extract($data);
     </div>
 </div>
 
+<!-- Reschedule Modal -->
+<?php foreach ($bookings as $booking): ?>
+    <div class="modal fade" id="rescheduleModal<?php echo $booking['appointment_id']; ?>" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-calendar2-check me-2 text-primary"></i>Reschedule Appointment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <!-- Current Appointment Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-3 text-muted">Current Appointment</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><?php echo htmlspecialchars($booking['service_name']); ?></h6>
+                                    <p class="text-dark mb-0">
+                                        <i class="bi bi-clock me-2"></i><?php echo date('g:i A', strtotime($booking['start_time'])); ?> - 
+                                        <?php 
+                                            $endTime = strtotime($booking['start_time'] . ' + ' . $booking['duration'] . ' minutes');
+                                            echo date('g:i A', $endTime);
+                                        ?>
+                                        <span class="mx-2">·</span>
+                                        <i class="bi bi-calendar3 me-2"></i><?php echo date('M d, Y', strtotime($booking['appointment_date'])); ?>
+                                    </p>
+                                </div>
+                                <span class="badge bg-primary"><?php echo $booking['duration']; ?> mins</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New Schedule Selection -->
+                    <h6 class="mb-3">Select New Schedule</h6>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="new-date-<?php echo $booking['appointment_id']; ?>"
+                                       min="<?php echo date('Y-m-d'); ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Time</label>
+                                <select class="form-select" 
+                                        id="new-time-<?php echo $booking['appointment_id']; ?>">
+                                    <option value="">Select time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" 
+                            class="btn btn-primary" 
+                            onclick="submitReschedule(<?php echo $booking['appointment_id']; ?>)">
+                        Confirm Reschedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endforeach; ?>
+
 <style>
 .cursor-pointer {
     cursor: pointer;
