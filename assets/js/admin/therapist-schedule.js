@@ -33,16 +33,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateCalendarDates() {
         const headers = document.querySelectorAll('thead th:not(:first-child)');
-        const cells = document.querySelectorAll('.availability-slot');
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         
         headers.forEach((header, index) => {
             const date = new Date(currentWeekStart);
             date.setDate(date.getDate() + index);
             const formattedDate = formatDate(date);
-            header.textContent = `${getDayName(date)} ${date.getDate()}/${date.getMonth() + 1}`;
+            const dayName = days[index];
+            header.textContent = `${dayName} ${date.getDate()}/${date.getMonth() + 1}`;
             
             // Update data-date attributes for the cells in this column
-            const columnCells = document.querySelectorAll(`.availability-slot[data-day="${header.textContent.split(' ')[0]}"]`);
+            const columnCells = document.querySelectorAll(`.availability-slot[data-day="${dayName}"]`);
             columnCells.forEach(cell => {
                 cell.dataset.date = formattedDate;
             });
@@ -59,15 +60,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
 
+    function clearAvailability() {
+        document.querySelectorAll('.availability-slot').forEach(slot => {
+            slot.className = 'availability-slot';
+            slot.style.backgroundColor = ''; // Clear background color
+            slot.style.cursor = 'default';
+            slot.title = '';
+            // Remove any tooltips
+            const tooltip = slot.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        });
+    }
+
     function loadTherapistAvailability() {
         const therapistId = therapistSelect.value;
         if (!therapistId) return;
 
         // Clear existing availability
-        document.querySelectorAll('.availability-slot').forEach(slot => {
-            slot.className = 'availability-slot';
-            slot.title = ''; // Clear existing titles
-        });
+        clearAvailability();
 
         // Show loading state
         document.body.style.cursor = 'wait';
@@ -94,29 +106,47 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.availability && Array.isArray(data.availability)) {
                 console.log('Processing availability slots:', data.availability.length);
                 
+                if (data.availability.length === 0) {
+                    console.log('No availability data for this week');
+                    return;
+                }
+                
                 data.availability.forEach(slot => {
                     console.log('Processing slot:', slot);
-                    const slotDate = new Date(slot.date);
-                    const formattedDate = formatDate(slotDate);
-                    console.log(`Looking for slot: date=${formattedDate}, time=${slot.start_time}`);
                     
-                    const cell = document.querySelector(
-                        `.availability-slot[data-date="${formattedDate}"][data-time="${slot.start_time}"]`
-                    );
+                    // Get start and end hours
+                    const startHour = parseInt(slot.start_time.split(':')[0]);
+                    const endHour = parseInt(slot.end_time.split(':')[0]);
                     
-                    if (cell) {
-                        console.log('Found cell:', cell);
-                        cell.classList.add(slot.is_booked ? 'booked' : 'available');
-                        cell.title = slot.is_booked ? 'Booked' : 'Available';
-                    } else {
-                        console.log('Cell not found for:', formattedDate, slot.start_time);
+                    // Mark each hour in the range as available
+                    for (let hour = startHour; hour < endHour; hour++) {
+                        const formattedTime = `${hour.toString().padStart(2, '0')}:00`;
+                        console.log(`Looking for slot: date=${slot.date}, time=${formattedTime}`);
+                        
+                        const cell = document.querySelector(
+                            `.availability-slot[data-date="${slot.date}"][data-time="${formattedTime}"]`
+                        );
+                        
+                        if (cell) {
+                            console.log('Found cell:', cell);
+                            cell.classList.add('available');
+                            cell.style.backgroundColor = '#28a745'; // Green for available
+                            cell.style.cursor = 'pointer';
+                            cell.title = 'Available';
+                        } else {
+                            console.log('Cell not found for:', slot.date, formattedTime);
+                        }
                     }
                 });
+            } else {
+                console.log('No availability data or invalid format');
+                clearAvailability(); // Ensure cells are cleared if no data
             }
         })
         .catch(error => {
             console.error('Error loading availability:', error);
             alert(`Error loading therapist availability: ${error.message}`);
+            clearAvailability(); // Clear cells on error
         })
         .finally(() => {
             document.body.style.cursor = 'default';
@@ -189,64 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.groupEnd();
     }
 
-    function updateCalendarWithAvailability(availability) {
-        console.group('Updating Calendar UI');
-        
-        // Clear existing availability indicators
-        const existingSlots = document.querySelectorAll('.time-slot');
-        console.log('Clearing existing slots:', existingSlots.length);
-        
-        existingSlots.forEach(slot => {
-            slot.className = 'time-slot';
-            // Remove existing tooltips
-            const tooltip = slot.querySelector('.tooltip');
-            if (tooltip) {
-                tooltip.remove();
-            }
-        });
-        
-        // Process each availability slot
-        availability.forEach((slot, index) => {
-            console.group(`Processing Slot ${index + 1}`);
-            console.log('Slot data:', slot);
-            
-            const timeSlots = slot.start_time.split(':')[0];
-            const selector = `[data-date="${slot.date}"][data-time="${timeSlots}:00"]`;
-            console.log('Looking for cell with selector:', selector);
-            
-            const cell = document.querySelector(selector);
-            if (cell) {
-                console.log('Found cell:', {
-                    date: cell.dataset.date,
-                    time: cell.dataset.time,
-                    currentClass: cell.className
-                });
-                
-                // Update cell class
-                cell.className = `time-slot ${slot.status}`;
-                
-                // Add tooltip
-                const tooltip = document.createElement('span');
-                tooltip.className = 'tooltip';
-                tooltip.textContent = `${slot.status.charAt(0).toUpperCase() + slot.status.slice(1)}`;
-                cell.appendChild(tooltip);
-                
-                console.log('Updated cell:', {
-                    newClass: cell.className,
-                    hasTooltip: cell.querySelector('.tooltip') !== null
-                });
-            } else {
-                console.warn('No matching cell found for:', {
-                    date: slot.date,
-                    time: `${timeSlots}:00`
-                });
-            }
-            console.groupEnd();
-        });
-        
-        console.groupEnd();
-    }
-
     // Add this function to debug calendar structure
     function debugCalendarStructure() {
         console.group('Calendar Structure Debug');
@@ -275,6 +247,52 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.groupEnd();
     }
+
+    // Add styles to the document
+    const styles = document.createElement('style');
+    styles.textContent = `
+        .time-slot {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            cursor: default;
+            transition: all 0.2s ease;
+        }
+        
+        .time-slot.available {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .time-slot.available:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        
+        .time-slot.booked {
+            background-color: #dc3545;
+            color: white;
+            cursor: not-allowed;
+        }
+        
+        .schedule-calendar {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .schedule-calendar th {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .schedule-calendar td:first-child {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+    `;
+    document.head.appendChild(styles);
 
     // Call this function after the calendar is loaded
     document.addEventListener('DOMContentLoaded', () => {
