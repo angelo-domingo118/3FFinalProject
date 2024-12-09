@@ -74,20 +74,54 @@ class DashboardApiController {
 
     public function submitReview() {
         try {
-            $data = [
-                'appointment_id' => $_POST['appointment_id'],
+            // Verify AJAX request
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+                throw new Exception('Invalid request method');
+            }
+
+            // Check if user is logged in
+            if (!isset($_SESSION['user_id'])) {
+                throw new Exception('User not logged in');
+            }
+
+            // Get POST data
+            $appointmentId = filter_input(INPUT_POST, 'appointment_id', FILTER_VALIDATE_INT);
+            $rating = filter_input(INPUT_POST, 'rating', FILTER_VALIDATE_INT);
+            $comment = filter_input(INPUT_POST, 'comment', FILTER_SANITIZE_STRING);
+
+            // Validate inputs
+            if (!$appointmentId || !$rating || !$comment) {
+                throw new Exception('Missing or invalid input data');
+            }
+
+            // Validate rating range
+            if ($rating < 1 || $rating > 5) {
+                throw new Exception('Rating must be between 1 and 5');
+            }
+
+            // Verify appointment belongs to user
+            if (!$this->appointment->belongsToUser($appointmentId, $_SESSION['user_id'])) {
+                throw new Exception('Invalid appointment access');
+            }
+
+            // Prepare review data
+            $reviewData = [
+                'appointment_id' => $appointmentId,
                 'user_id' => $_SESSION['user_id'],
-                'rating' => $_POST['rating'],
-                'comment' => $_POST['comment']
+                'rating' => $rating,
+                'comment' => $comment
             ];
 
-            if ($this->review->createReview($data)) {
+            // Create the review
+            if ($this->review->createReview($reviewData)) {
                 echo json_encode(['success' => true]);
             } else {
-                throw new Exception('Failed to submit review');
+                throw new Exception('Failed to save review');
             }
+
         } catch (Exception $e) {
-            http_response_code(400);
+            http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }
     }

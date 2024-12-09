@@ -97,6 +97,15 @@ class Appointment {
         ];
     }
 
+    public function belongsToUser($appointmentId, $userId) {
+        $sql = "SELECT COUNT(*) FROM Appointments 
+                WHERE appointment_id = ? AND user_id = ? AND is_deleted = FALSE";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$appointmentId, $userId]);
+        return $stmt->fetchColumn() > 0;
+    }
+
     public function getBookingCounts() {
         try {
             $sql = "SELECT 
@@ -228,7 +237,7 @@ class Appointment {
         $sql = "SELECT COUNT(*) as count FROM Appointments 
                 WHERE appointment_date = ? 
                 AND start_time = ? 
-                AND therapist_id = ?
+                AND therapist_id = ? 
                 AND status != 'canceled'
                 AND is_deleted = FALSE";
         $params = [$date, $time, $therapistId];
@@ -241,4 +250,4 @@ class Appointment {
         $result = $this->db->query($sql, $params);
         return $result[0]['count'] == 0;
     }
-} 
+}

@@ -88,45 +88,70 @@ function submitReview() {
     const form = document.getElementById('reviewForm');
     const formData = new FormData(form);
     
-    // Validate rating
-    if (!formData.get('rating')) {
+    // Basic validation
+    const rating = formData.get('rating');
+    const comment = formData.get('comment');
+    const appointmentId = formData.get('appointment_id');
+
+    if (!rating) {
         alert('Please select a rating');
         return;
     }
 
-    if (typeof window.BASE_URL === 'undefined') {
-        console.error('BASE_URL is not defined');
-        alert('Configuration error. Please contact support.');
+    if (!comment || comment.trim() === '') {
+        alert('Please enter your review comment');
         return;
     }
 
-    fetch(`${window.BASE_URL}/public/api/dashboard/submit-review`, {
+    if (!appointmentId) {
+        alert('Invalid appointment. Please try again.');
+        return;
+    }
+
+    // Disable submit button and show loading state
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+    }
+
+    // Submit the review
+    fetch(`${window.BASE_URL}/public/submit_review.php`, {
         method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
         body: formData
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json().then(data => {
+                throw new Error(data.error || `Server error (${response.status})`);
+            });
         }
         return response.json();
     })
     .then(data => {
         if (data.success) {
-            if (window.reviewModal) {
-                window.reviewModal.hide();
+            // Close modal if it exists
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+            if (modal) {
+                modal.hide();
             }
-            // Refresh the page to show the new review
+            
+            alert('Thank you for your review!');
             window.location.reload();
         } else {
-            alert(data.error || 'Failed to submit review');
+            throw new Error(data.error || 'Failed to submit review');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while submitting the review');
+        alert(error.message || 'An error occurred while submitting the review');
+    })
+    .finally(() => {
+        // Reset button state
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Review';
+        }
     });
 }
 

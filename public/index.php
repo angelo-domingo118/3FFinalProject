@@ -11,6 +11,16 @@ ob_start();
 session_start();
 
 require_once '../config/config.php';
+require_once '../app/config/Database.php';
+
+// Initialize database connection
+try {
+    $database = new Database();
+    $pdo = $database->connect();
+} catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
+    die("Connection failed. Please try again later.");
+}
 
 // Include models - use absolute paths
 require_once __DIR__ . '/../app/models/Service.php';
@@ -78,6 +88,16 @@ switch ($url[0]) {
                     // Handle password update
                     $controller->updatePassword();
                 }
+            } else if ($url[1] === 'review' && isset($url[2]) && $url[2] === 'submit') {
+                require_once '../app/controllers/api/DashboardApiController.php';
+                
+                // Set JSON content type header early
+                header('Content-Type: application/json');
+                
+                // Create controller with the existing database connection
+                $controller = new DashboardApiController($pdo);
+                $controller->submitReview();
+                exit;
             } else {
                 $method = $url[1];
                 if (method_exists($controller, $method)) {
@@ -186,6 +206,23 @@ switch ($url[0]) {
                 } else if ($url[2] === 'availability') {
                     // Save therapist availability
                     $controller->saveAvailability();
+                }
+                exit;
+            } else if ($url[1] === 'dashboard') {
+                require_once '../app/controllers/api/DashboardApiController.php';
+                $controller = new DashboardApiController($pdo);
+                
+                if (isset($url[2])) {
+                    switch ($url[2]) {
+                        case 'submit-review':
+                            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                                $controller->submitReview();
+                            }
+                            break;
+                        default:
+                            http_response_code(404);
+                            echo json_encode(['error' => 'API endpoint not found']);
+                    }
                 }
                 exit;
             }
