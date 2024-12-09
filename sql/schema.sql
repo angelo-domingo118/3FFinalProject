@@ -5,12 +5,12 @@ CREATE DATABASE IF NOT EXISTS spa_booking_db;
 USE spa_booking_db;
 
 -- First drop tables in reverse order of dependencies
-DROP TABLE IF EXISTS Promotions;
 DROP TABLE IF EXISTS Reviews;
-DROP TABLE IF EXISTS Availability;
 DROP TABLE IF EXISTS Payments;
 DROP TABLE IF EXISTS Appointments;
+DROP TABLE IF EXISTS Availability;
 DROP TABLE IF EXISTS Services;
+DROP TABLE IF EXISTS Promotions;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS Roles;
 
@@ -115,6 +115,25 @@ CREATE TABLE IF NOT EXISTS Appointments (
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
 
+-- Create Promotions table
+CREATE TABLE IF NOT EXISTS Promotions (
+    promo_id INT AUTO_INCREMENT PRIMARY KEY,
+    promo_code VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    discount_percent DECIMAL(5,2) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    is_deleted BOOLEAN DEFAULT FALSE
+) ENGINE=InnoDB;
+
+-- Insert sample promotions
+INSERT INTO Promotions (promo_code, description, discount_percent, start_date, end_date) VALUES
+('WELCOME2024', 'New Year Special Offer', 15.00, '2024-01-01', '2024-02-29'),
+('FIRSTTIME', 'First-time Customer Discount', 20.00, '2024-01-01', '2024-12-31'),
+('SUMMER24', 'Summer Season Special', 10.00, '2024-03-01', '2024-05-31'),
+('HOLIDAY', 'Holiday Season Discount', 25.00, '2024-12-01', '2024-12-31'),
+('WEEKEND', 'Weekend Special Offer', 5.00, '2024-01-01', '2024-12-31');
+
 -- Create Payments table
 CREATE TABLE IF NOT EXISTS Payments (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -184,25 +203,6 @@ CREATE TABLE IF NOT EXISTS Reviews (
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     is_deleted BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB;
-
--- Create Promotions table
-CREATE TABLE IF NOT EXISTS Promotions (
-    promo_id INT AUTO_INCREMENT PRIMARY KEY,
-    promo_code VARCHAR(50) NOT NULL UNIQUE,
-    description TEXT,
-    discount_percent DECIMAL(5,2) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    is_deleted BOOLEAN DEFAULT FALSE
-) ENGINE=InnoDB;
-
--- Insert sample promotions
-INSERT INTO Promotions (promo_code, description, discount_percent, start_date, end_date) VALUES
-('WELCOME2024', 'New Year Special Offer', 15.00, '2024-01-01', '2024-02-29'),
-('FIRSTTIME', 'First-time Customer Discount', 20.00, '2024-01-01', '2024-12-31'),
-('SUMMER24', 'Summer Season Special', 10.00, '2024-03-01', '2024-05-31'),
-('HOLIDAY', 'Holiday Season Discount', 25.00, '2024-12-01', '2024-12-31'),
-('WEEKEND', 'Weekend Special Offer', 5.00, '2024-01-01', '2024-12-31');
 
 -- Adding indexes for performance optimization
 CREATE INDEX idx_users_email ON Users(email);
